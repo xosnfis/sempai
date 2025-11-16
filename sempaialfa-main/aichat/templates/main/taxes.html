@@ -1,0 +1,422 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Налоговые выплаты - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="cabinet-page">
+    <!-- Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                </h1>
+                <p class="cabinet-subtitle">Налоговые выплаты</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <div class="taxes-container">
+                <div class="taxes-header">
+                    <a href="{% url 'cabinet' %}" class="taxes-back-link">← Назад в личный кабинет</a>
+                </div>
+
+                <!-- Total Debt Display -->
+                <div class="taxes-total-debt">
+                    <div class="taxes-total-label">Общая задолженность</div>
+                    <div class="taxes-total-amount" id="totalDebt">0 ₽</div>
+                    <div class="taxes-penalty-info" id="penaltyInfo" style="display: none;">
+                        <span class="taxes-penalty-text">+ штраф за просрочку: <span id="penaltyAmount">0 ₽</span></span>
+                    </div>
+                </div>
+
+                <!-- Taxes List -->
+                <div class="taxes-list" id="taxesList">
+                    <!-- Taxes will be added via JavaScript -->
+                </div>
+
+                <!-- Pay All Button -->
+                <div class="taxes-actions">
+                    <button class="taxes-pay-all-btn" id="payAllBtn" onclick="payAll()" disabled>Оплатить все</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const taxes = [
+            { id: 'profit', name: 'Налог на прибыль организации', basePrice: 50000 },
+            { id: 'vat', name: 'Налог на добавленную стоимость (НДС)', basePrice: 35000 },
+            { id: 'property', name: 'Налог на имущество организации', basePrice: 25000 },
+            { id: 'insurance', name: 'Страховые взносы', basePrice: 40000 }
+        ];
+
+        const PENALTY_RATE = 0.15; // 15% за просрочку
+
+        function getTaxesData() {
+            const saved = localStorage.getItem('taxesData');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            // Инициализация с текущей датой
+            const data = {};
+            taxes.forEach(tax => {
+                data[tax.id] = {
+                    debt: tax.basePrice,
+                    lastUpdate: Date.now(),
+                    lastPayment: null
+                };
+            });
+            localStorage.setItem('taxesData', JSON.stringify(data));
+            return data;
+        }
+
+        function saveTaxesData(data) {
+            localStorage.setItem('taxesData', JSON.stringify(data));
+        }
+
+        function calculateMonthlyIncrease() {
+            // Случайное увеличение от 5% до 15% от базовой стоимости
+            return Math.random() * 0.10 + 0.05;
+        }
+
+        function updateTaxes() {
+            const data = getTaxesData();
+            const now = Date.now();
+            const oneMonth = 30 * 24 * 60 * 60 * 1000;
+
+            taxes.forEach(tax => {
+                const taxData = data[tax.id];
+                const monthsSinceUpdate = Math.floor((now - taxData.lastUpdate) / oneMonth);
+
+                if (monthsSinceUpdate > 0) {
+                    // Увеличиваем долг ежемесячно на процент от базовой стоимости
+                    for (let i = 0; i < monthsSinceUpdate; i++) {
+                        const increase = tax.basePrice * calculateMonthlyIncrease();
+                        taxData.debt += increase;
+                    }
+                    taxData.lastUpdate = now;
+                }
+            });
+
+            saveTaxesData(data);
+            return data;
+        }
+
+        function calculatePenalty(debt, daysOverdue) {
+            if (daysOverdue <= 0) return 0;
+            return debt * PENALTY_RATE * daysOverdue;
+        }
+
+        function formatAmount(amount) {
+            return new Intl.NumberFormat('ru-RU').format(Math.round(amount));
+        }
+
+        function getTimeUntilNextCharge(lastUpdate) {
+            const now = Date.now();
+            const oneMonth = 30 * 24 * 60 * 60 * 1000;
+            const nextMonth = new Date(lastUpdate);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            nextMonth.setDate(1); // Первый день следующего месяца
+            nextMonth.setHours(0, 0, 0, 0);
+            
+            const timeLeft = nextMonth.getTime() - now;
+            return Math.max(0, timeLeft);
+        }
+
+        function formatTime(ms) {
+            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+            
+            if (days > 0) {
+                return `${days} дн. ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function renderTaxes() {
+            const data = updateTaxes();
+            const list = document.getElementById('taxesList');
+            list.innerHTML = '';
+
+            let totalDebt = 0;
+            let totalPenalty = 0;
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            const paymentDeadline = 30 * oneDay; // 30 дней на оплату
+
+            taxes.forEach(tax => {
+                const taxData = data[tax.id];
+                const daysSincePayment = taxData.lastPayment ? 
+                    Math.floor((now - taxData.lastPayment) / oneDay) : 
+                    Math.floor((now - taxData.lastUpdate) / oneDay);
+                const daysOverdue = Math.max(0, daysSincePayment - 30);
+                const penalty = calculatePenalty(taxData.debt, daysOverdue);
+                const timeUntilNext = getTimeUntilNextCharge(taxData.lastUpdate);
+
+                totalDebt += taxData.debt;
+                totalPenalty += penalty;
+
+                const item = document.createElement('div');
+                item.className = 'tax-item';
+                item.id = `tax-${tax.id}`;
+                item.innerHTML = `
+                    <div class="tax-item-content">
+                        <div class="tax-item-name">${tax.name}</div>
+                        <div class="tax-item-debt">
+                            <span class="tax-debt-label">Долг:</span>
+                            <span class="tax-debt-amount">${formatAmount(taxData.debt)} ₽</span>
+                        </div>
+                        <div class="tax-item-timer">
+                            <span class="tax-timer-label">До следующего начисления:</span>
+                            <span class="tax-timer-value" id="timer-${tax.id}">${formatTime(timeUntilNext)}</span>
+                        </div>
+                        ${daysOverdue > 0 ? `
+                            <div class="tax-item-penalty">
+                                <span class="tax-penalty-label">Штраф (${daysOverdue} дн. просрочки):</span>
+                                <span class="tax-penalty-amount">+${formatAmount(penalty)} ₽</span>
+                            </div>
+                        ` : ''}
+                        <div class="tax-item-actions">
+                            <button class="tax-pay-btn" onclick="payTax('${tax.id}')">Оплатить</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            // Обновляем общую сумму
+            document.getElementById('totalDebt').textContent = formatAmount(totalDebt) + ' ₽';
+            
+            if (totalPenalty > 0) {
+                document.getElementById('penaltyInfo').style.display = 'block';
+                document.getElementById('penaltyAmount').textContent = formatAmount(totalPenalty) + ' ₽';
+            } else {
+                document.getElementById('penaltyInfo').style.display = 'none';
+            }
+
+            // Активируем кнопку "Оплатить все"
+            document.getElementById('payAllBtn').disabled = totalDebt === 0;
+        }
+
+        function payTax(taxId) {
+            const data = getTaxesData();
+            const taxData = data[taxId];
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            const daysSincePayment = taxData.lastPayment ? 
+                Math.floor((now - taxData.lastPayment) / oneDay) : 
+                Math.floor((now - taxData.lastUpdate) / oneDay);
+            const daysOverdue = Math.max(0, daysSincePayment - 30);
+            const penalty = calculatePenalty(taxData.debt, daysOverdue);
+            const totalAmount = taxData.debt + penalty;
+
+            // Показ модального окна подтверждения
+            showConfirmModal(`Вы уверены, что хотите оплатить ${taxes.find(t => t.id === taxId).name}?\nСумма: ${formatAmount(totalAmount)} ₽`, function() {
+                // Получаем текущий выбранный счет
+                const accountNum = parseInt(localStorage.getItem('currentAccount') || '1');
+                const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+                const balance = parseFloat(localStorage.getItem(key) || (accountNum === 1 ? 237000 : 50000));
+                
+                if (balance < totalAmount) {
+                    alert('Недостаточно средств на счете');
+                    return;
+                }
+
+                // Списываем с баланса
+                const newBalance = balance - totalAmount;
+                localStorage.setItem(key, newBalance.toString());
+
+                // Обнуляем долг
+                taxData.debt = 0;
+                taxData.lastPayment = now;
+                taxData.lastUpdate = now;
+
+                saveTaxesData(data);
+
+                // Добавляем в чеки текущего пользователя
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const email = currentUser.email || '';
+                if (email) {
+                    const key = `receipts_${email}`;
+                    let receipts = JSON.parse(localStorage.getItem(key) || '[]');
+                    receipts.push({
+                        id: Date.now(),
+                        accountNumber: 'Налоговые выплаты',
+                        bank: 'Альфа',
+                        operationType: 'Перевод',
+                        amount: totalAmount,
+                        balance: newBalance,
+                        date: new Date().toLocaleString('ru-RU'),
+                        description: taxes.find(t => t.id === taxId).name
+                    });
+                    localStorage.setItem(key, JSON.stringify(receipts));
+                }
+
+                // Обновляем балансы и задолженность в кабинете, если он открыт
+                if (window.opener) {
+                    window.opener.updateBalances();
+                    window.opener.updateTotalDebt();
+                }
+
+                alert('Оплата выполнена успешно!');
+                renderTaxes();
+            });
+        }
+
+        // Показ модального окна подтверждения
+        function showConfirmModal(message, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            const messageEl = document.getElementById('confirmMessage');
+            messageEl.textContent = message;
+            modal.style.display = 'flex';
+            
+            document.getElementById('confirmYes').onclick = function() {
+                modal.style.display = 'none';
+                onConfirm();
+            };
+            
+            document.getElementById('confirmNo').onclick = function() {
+                modal.style.display = 'none';
+            };
+        }
+
+        function payAll() {
+            const data = getTaxesData();
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            let totalAmount = 0;
+
+            taxes.forEach(tax => {
+                const taxData = data[tax.id];
+                const daysSincePayment = taxData.lastPayment ? 
+                    Math.floor((now - taxData.lastPayment) / oneDay) : 
+                    Math.floor((now - taxData.lastUpdate) / oneDay);
+                const daysOverdue = Math.max(0, daysSincePayment - 30);
+                const penalty = calculatePenalty(taxData.debt, daysOverdue);
+                totalAmount += taxData.debt + penalty;
+            });
+
+            if (totalAmount === 0) {
+                alert('Нет задолженности');
+                return;
+            }
+
+            showConfirmModal(`Вы уверены, что хотите оплатить все налоги?\nОбщая сумма: ${formatAmount(totalAmount)} ₽`, function() {
+                // Получаем текущий выбранный счет
+                const accountNum = parseInt(localStorage.getItem('currentAccount') || '1');
+                const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+                const balance = parseFloat(localStorage.getItem(key) || (accountNum === 1 ? 237000 : 50000));
+                
+                if (balance < totalAmount) {
+                    alert('Недостаточно средств на счете');
+                    return;
+                }
+
+                const newBalance = balance - totalAmount;
+                localStorage.setItem(key, newBalance.toString());
+
+                // Обнуляем все долги
+                taxes.forEach(tax => {
+                    data[tax.id].debt = 0;
+                    data[tax.id].lastPayment = now;
+                    data[tax.id].lastUpdate = now;
+                });
+
+                saveTaxesData(data);
+
+                // Добавляем в чеки текущего пользователя
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const email = currentUser.email || '';
+                if (email) {
+                    const key = `receipts_${email}`;
+                    let receipts = JSON.parse(localStorage.getItem(key) || '[]');
+                    receipts.push({
+                        id: Date.now(),
+                        accountNumber: 'Налоговые выплаты',
+                        bank: 'Альфа',
+                        operationType: 'Перевод',
+                        amount: totalAmount,
+                        balance: newBalance,
+                        date: new Date().toLocaleString('ru-RU'),
+                        description: 'Оплата всех налогов'
+                    });
+                    localStorage.setItem(key, JSON.stringify(receipts));
+                }
+
+                // Обновляем балансы и задолженность в кабинете, если он открыт
+                if (window.opener) {
+                    window.opener.updateBalances();
+                    window.opener.updateTotalDebt();
+                }
+
+                alert('Все налоги оплачены успешно!');
+                renderTaxes();
+            });
+        }
+
+        // Обновляем таймеры каждую секунду
+        function updateTimers() {
+            const data = getTaxesData();
+            taxes.forEach(tax => {
+                const taxData = data[tax.id];
+                const timeUntilNext = getTimeUntilNextCharge(taxData.lastUpdate);
+                const timerElement = document.getElementById(`timer-${tax.id}`);
+                if (timerElement) {
+                    timerElement.textContent = formatTime(timeUntilNext);
+                }
+            });
+        }
+
+        // Обновляем каждую минуту
+        renderTaxes();
+        setInterval(renderTaxes, 60000);
+        
+        // Обновляем таймеры каждую секунду
+        setInterval(updateTimers, 1000);
+    </script>
+
+    <!-- Confirmation Modal -->
+    <div class="confirm-modal" id="confirmModal" style="display: none;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Подтверждение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="confirmMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" id="confirmNo">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" id="confirmYes">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Применение темы при загрузке страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+</body>
+</html>
+

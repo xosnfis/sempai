@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Почта - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="cabinet-page">
+    <!-- Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                </h1>
+                <p class="cabinet-subtitle">Почта</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <div class="mail-container">
+                <div class="mail-header">
+                    <a href="{% url 'cabinet' %}" class="mail-back-link">← Назад в личный кабинет</a>
+                </div>
+
+                <div class="mail-section">
+                    <h2 class="mail-section-title">Выберите почтовый сервис</h2>
+                    <div class="mail-services-list">
+                        <a href="https://mail.ru" target="_blank" class="mail-service-item">
+                            <div class="mail-service-icon">📧</div>
+                            <div class="mail-service-content">
+                                <div class="mail-service-name">Mail.ru</div>
+                                <div class="mail-service-description">Почта Mail.ru</div>
+                            </div>
+                            <div class="mail-service-arrow">→</div>
+                        </a>
+
+                        <a href="https://mail.google.com" target="_blank" class="mail-service-item">
+                            <div class="mail-service-icon">📬</div>
+                            <div class="mail-service-content">
+                                <div class="mail-service-name">Gmail</div>
+                                <div class="mail-service-description">Почта Google</div>
+                            </div>
+                            <div class="mail-service-arrow">→</div>
+                        </a>
+
+                        <a href="https://mail.yandex.ru" target="_blank" class="mail-service-item">
+                            <div class="mail-service-icon">✉️</div>
+                            <div class="mail-service-content">
+                                <div class="mail-service-name">Яндекс.Почта</div>
+                                <div class="mail-service-description">Почта Яндекс</div>
+                            </div>
+                            <div class="mail-service-arrow">→</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // Применение темы при загрузке страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,240 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перевод средств - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="cabinet-page">
+    <!-- Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                </h1>
+                <p class="cabinet-subtitle">Перевод средств</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <div class="transfer-container">
+                <!-- Balance Display -->
+                <div class="transfer-balance">
+                    <div class="transfer-balance-label">Баланс</div>
+                    <div class="transfer-balance-amount" id="currentBalance">237 000 ₽</div>
+                </div>
+
+                <!-- Transfer Form -->
+                <form class="transfer-form" id="transferForm">
+                    <div class="transfer-form-group">
+                        <label for="accountNumber" class="transfer-label">Номер счета</label>
+                        <input type="text" id="accountNumber" class="transfer-input" placeholder="Введите номер счета" required>
+                    </div>
+
+                    <div class="transfer-form-group">
+                        <label for="bank" class="transfer-label">Банк</label>
+                        <select id="bank" class="transfer-select" required>
+                            <option value="">Выберите банк</option>
+                            <option value="Альфа">Альфа</option>
+                            <option value="Сбербанк">Сбербанк</option>
+                            <option value="ВТБ">ВТБ</option>
+                            <option value="Другое">Другое</option>
+                        </select>
+                    </div>
+
+                    <div class="transfer-form-group">
+                        <label for="operationType" class="transfer-label">Тип операции</label>
+                        <select id="operationType" class="transfer-select" required>
+                            <option value="">Выберите операцию</option>
+                            <option value="transfer">Перевод</option>
+                            <option value="deposit">Пополнить баланс</option>
+                        </select>
+                    </div>
+
+                    <div class="transfer-form-group">
+                        <label for="amount" class="transfer-label">Сумма</label>
+                        <input type="number" id="amount" class="transfer-input" placeholder="Введите сумму" min="1" required>
+                    </div>
+
+                    <div class="transfer-form-actions">
+                        <button type="button" class="transfer-btn transfer-btn-cancel" onclick="window.location.href='{% url 'cabinet' %}'">Отмена</button>
+                        <button type="submit" class="transfer-btn transfer-btn-submit">Перевести</button>
+                    </div>
+                </form>
+
+                <!-- Back Button -->
+                <div class="transfer-back">
+                    <a href="{% url 'cabinet' %}" class="transfer-back-link">← Назад в личный кабинет</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div class="confirm-modal" id="confirmModal" style="display: none;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Подтверждение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="confirmMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" id="confirmNo">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" id="confirmYes">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Получаем текущий выбранный счет
+        function getCurrentAccount() {
+            return parseInt(localStorage.getItem('currentAccount') || '1');
+        }
+
+        // Получаем баланс из localStorage или используем начальное значение
+        function getBalance() {
+            const accountNum = getCurrentAccount();
+            const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+            const savedBalance = localStorage.getItem(key);
+            if (savedBalance) {
+                return parseFloat(savedBalance);
+            }
+            return accountNum === 1 ? 237000 : 50000;
+        }
+
+        // Сохраняем баланс
+        function setBalance(balance) {
+            const accountNum = getCurrentAccount();
+            const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+            localStorage.setItem(key, balance.toString());
+        }
+
+        function updateBalanceDisplay() {
+            const balance = getBalance();
+            document.getElementById('currentBalance').textContent = formatBalance(balance);
+        }
+
+        function formatBalance(amount) {
+            return new Intl.NumberFormat('ru-RU').format(amount) + ' ₽';
+        }
+
+        // Обновляем отображение баланса при загрузке
+        updateBalanceDisplay();
+
+        // Автоматически выбираем "Альфа" при выборе "Пополнить баланс"
+        document.getElementById('operationType').addEventListener('change', function() {
+            const bankSelect = document.getElementById('bank');
+            if (this.value === 'deposit') {
+                bankSelect.value = 'Альфа';
+            }
+        });
+
+        // Показ модального окна подтверждения
+        function showConfirmModal(message, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            const messageEl = document.getElementById('confirmMessage');
+            messageEl.textContent = message;
+            modal.style.display = 'flex';
+            
+            document.getElementById('confirmYes').onclick = function() {
+                modal.style.display = 'none';
+                onConfirm();
+            };
+            
+            document.getElementById('confirmNo').onclick = function() {
+                modal.style.display = 'none';
+            };
+        }
+
+        // Обработка формы
+        document.getElementById('transferForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const accountNumber = document.getElementById('accountNumber').value;
+            const bank = document.getElementById('bank').value;
+            const operationType = document.getElementById('operationType').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const currentBalance = getBalance();
+
+            if (!accountNumber || !bank || !operationType || !amount) {
+                alert('Пожалуйста, заполните все поля');
+                return;
+            }
+
+            let newBalance;
+            let operationText;
+            if (operationType === 'transfer') {
+                if (amount > currentBalance) {
+                    alert('Недостаточно средств на счете');
+                    return;
+                }
+                newBalance = currentBalance - amount;
+                operationText = 'перевод';
+            } else if (operationType === 'deposit') {
+                newBalance = currentBalance + amount;
+                operationText = 'пополнение';
+            }
+
+            const message = `Вы уверены, что хотите выполнить ${operationText} на сумму ${new Intl.NumberFormat('ru-RU').format(amount)} ₽?`;
+            
+            showConfirmModal(message, function() {
+                // Сохраняем новый баланс
+                setBalance(newBalance);
+                updateBalanceDisplay();
+
+                // Создаем запись о транзакции
+                const transaction = {
+                    id: Date.now(),
+                    accountNumber: accountNumber,
+                    bank: bank,
+                    operationType: operationType === 'transfer' ? 'Перевод' : 'Пополнение',
+                    amount: amount,
+                    balance: newBalance,
+                    date: new Date().toLocaleString('ru-RU')
+                };
+
+                // Получаем существующие чеки текущего пользователя или создаем новый массив
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const email = currentUser.email || '';
+                if (email) {
+                    const key = `receipts_${email}`;
+                    let receipts = JSON.parse(localStorage.getItem(key) || '[]');
+                    receipts.push(transaction);
+                    localStorage.setItem(key, JSON.stringify(receipts));
+                }
+
+                // Обновляем балансы на странице кабинета (если она открыта)
+                if (window.opener) {
+                    window.opener.updateBalances();
+                }
+
+                alert('Операция выполнена успешно!');
+                window.location.href = '{% url "cabinet" %}';
+            });
+        });
+        
+        // Применение темы при загрузке страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+</body>
+</html>
+

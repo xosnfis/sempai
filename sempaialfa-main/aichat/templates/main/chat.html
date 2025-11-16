@@ -1,0 +1,1567 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="chat-page">
+    <div class="chat-container">
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="chat-sidebar-overlay" id="chatSidebarOverlay" onclick="toggleChatSidebar()"></div>
+        
+        <!-- Left Sidebar -->
+        <aside class="chat-sidebar" id="chatSidebar">
+            <div class="chat-sidebar-header">
+                <div class="chat-logo">
+                    <a href="{% url 'cabinet' %}" class="chat-logo-link">
+                        <div class="chat-logo-box">Alfa-AI</div>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="chat-sidebar-content">
+                <button class="chat-new-chat-btn" data-i18n="new-chat">Новый чат</button>
+                <button class="chat-favorites-btn" id="favoritesBtn" data-i18n="favorites">Избранное</button>
+                <input type="text" class="chat-search-input" id="chatSearchInput" data-i18n-placeholder="search-chats" placeholder="Поиск по чатам">
+                
+                <div id="chatHistorySection"></div>
+            </div>
+            
+            <div class="chat-sidebar-footer">
+                <button class="chat-profile-btn" id="chatThemeBtn" onclick="toggleChatTheme()">
+                    <span class="chat-profile-text" id="chatThemeBtnText">Тема</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <div class="chat-main-header">
+                <button class="chat-burger-btn" id="chatBurgerBtn" onclick="toggleChatSidebar()">
+                    <span class="chat-burger-line"></span>
+                    <span class="chat-burger-line"></span>
+                    <span class="chat-burger-line"></span>
+                </button>
+                <a href="{% url 'cabinet' %}" class="chat-home-btn">
+                    <img src="{% static 'images/na_glavn.png' %}" alt="На главную" class="chat-home-icon">
+                </a>
+            </div>
+            
+            <div class="chat-content">
+                <div class="chat-messages-area" id="chatMessages">
+                    <div class="chat-ai-widget-main" id="chatWelcome">
+                        <div class="chat-ai-icon-main">
+                            <span class="chat-ai-icon-text-main">AI</span>
+                        </div>
+                        <div class="chat-ai-prompt">С чего начнём, Босс?</div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-wrapper">
+                    <div id="attachedFiles" class="attached-files-list" style="display: none;"></div>
+                    <div class="chat-input-container">
+                        <input type="file" id="fileInput" style="display: none;" multiple>
+                        <input type="text" class="chat-input" id="chatInput" data-i18n-placeholder="ask-me-something" placeholder="Спросите у меня что-нибудь..">
+                        <div class="chat-input-actions">
+                            <button type="button" class="chat-attach-btn" id="attachBtn">
+                                <img src="{% static 'images/prikrepit_file_svatl.png' %}" alt="Прикрепить файл">
+                            </button>
+                            <button class="chat-send-btn" id="chatSendBtn">
+                                <img src="{% static 'images/otpravit.png' %}" alt="Отправить">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="confirm-modal" id="confirmModal" style="display: none;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Подтверждение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="confirmMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" id="confirmBtn">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Chat Title Modal -->
+    <div class="confirm-modal" id="editChatModal" style="display: none;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Редактировать название чата</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <input type="text" id="editChatTitleInput" class="chat-edit-title-input" placeholder="Введите новое название">
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeEditChatModal()">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" id="saveEditChatBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Пути к изображениям
+        const IMAGE_PATHS = {
+            tem_tema: "{% static 'images/tem_tema.svg' %}",
+            sv_tema: "{% static 'images/sv_tema.svg' %}",
+            zakrep2: "{% static 'images/zakrep2.svg' %}",
+            red: "{% static 'images/red.svg' %}",
+            udalit: "{% static 'images/udalit.png' %}"
+        };
+        
+        // Получить чаты текущего пользователя
+        function getUserChats() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return [];
+            const key = `chats_${email}`;
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        }
+        
+        // Сохранить чаты текущего пользователя
+        function saveUserChats(chatsArray) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return;
+            const key = `chats_${email}`;
+            localStorage.setItem(key, JSON.stringify(chatsArray));
+        }
+        
+        // Получить избранные чаты текущего пользователя
+        function getUserFavorites() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return [];
+            const key = `favorites_${email}`;
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        }
+        
+        // Сохранить избранные чаты текущего пользователя
+        function saveUserFavorites(favoritesArray) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return;
+            const key = `favorites_${email}`;
+            localStorage.setItem(key, JSON.stringify(favoritesArray));
+        }
+        
+        // Получить закрепленные чаты текущего пользователя
+        function getUserPinnedChats() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return [];
+            const key = `pinnedChats_${email}`;
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        }
+        
+        // Сохранить закрепленные чаты текущего пользователя
+        function saveUserPinnedChats(pinnedChatsArray) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return;
+            const key = `pinnedChats_${email}`;
+            localStorage.setItem(key, JSON.stringify(pinnedChatsArray));
+        }
+        
+        // Управление чатами
+        let currentChatId = null;
+        let chats = getUserChats();
+        let favorites = getUserFavorites();
+        let pinnedChats = getUserPinnedChats();
+        let showFavoritesOnly = false;
+        let searchQuery = '';
+        
+        // Управление прикрепленными файлами
+        let attachedFiles = [];
+
+        // Инициализация
+        function initChat() {
+            // Перезагружаем чаты, избранное и закрепленные для текущего пользователя
+            chats = getUserChats();
+            
+            // Очищаем filesData из загруженных чатов (на случай если они еще там есть)
+            chats = chats.map(chat => ({
+                ...chat,
+                messages: chat.messages.map(msg => {
+                    const { filesData, ...msgWithoutFilesData } = msg;
+                    return msgWithoutFilesData;
+                })
+            }));
+            
+            favorites = getUserFavorites();
+            pinnedChats = getUserPinnedChats();
+            
+            renderChatHistory();
+            if (chats.length > 0) {
+                loadChat(chats[0].id);
+            }
+        }
+
+        // Создание нового чата
+        function createNewChat() {
+            const chatId = 'chat_' + Date.now();
+            const newChat = {
+                id: chatId,
+                title: 'Новый чат',
+                messages: [],
+                createdAt: new Date().toISOString()
+            };
+            chats.unshift(newChat);
+            saveChats();
+            loadChat(chatId);
+            renderChatHistory();
+        }
+
+        // Сохранение чатов (без данных файлов для экономии места в localStorage)
+        function saveChats() {
+            // Очищаем filesData из всех сообщений перед сохранением
+            const chatsToSave = chats.map(chat => ({
+                ...chat,
+                messages: chat.messages.map(msg => {
+                    const { filesData, ...msgWithoutFilesData } = msg;
+                    return msgWithoutFilesData;
+                })
+            }));
+            saveUserChats(chatsToSave);
+        }
+        
+        // Функция для очистки старых данных файлов из localStorage (вызывать один раз)
+        function cleanupOldFileData() {
+            try {
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const email = currentUser.email || '';
+                if (!email) return;
+                
+                const key = `chats_${email}`;
+                const savedChats = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                if (savedChats.length > 0) {
+                    const cleanedChats = savedChats.map(chat => ({
+                        ...chat,
+                        messages: chat.messages.map(msg => {
+                            const { filesData, ...msgWithoutFilesData } = msg;
+                            return msgWithoutFilesData;
+                        })
+                    }));
+                    
+                    localStorage.setItem(key, JSON.stringify(cleanedChats));
+                    console.log('Очищены старые данные файлов из localStorage');
+                }
+            } catch (e) {
+                console.error('Ошибка при очистке старых данных:', e);
+            }
+        }
+
+        // Загрузка чата
+        function loadChat(chatId, scrollToBottom = true) {
+            currentChatId = chatId;
+            const chat = chats.find(c => c.id === chatId);
+            if (!chat) return;
+
+            const messagesArea = document.getElementById('chatMessages');
+            const welcomeDiv = document.getElementById('chatWelcome');
+
+            if (chat.messages.length === 0) {
+                if (!welcomeDiv) {
+                    messagesArea.innerHTML = `
+                        <div class="chat-ai-widget-main" id="chatWelcome">
+                            <div class="chat-ai-icon-main">
+                                <span class="chat-ai-icon-text-main">AI</span>
+                            </div>
+                            <div class="chat-ai-prompt">С чего начнём, Босс?</div>
+                        </div>
+                    `;
+                }
+            } else {
+                messagesArea.innerHTML = '';
+                chat.messages.forEach(msg => {
+                    addMessageToUI(msg.text, msg.isUser, msg.files || null, msg.filesData || null, false);
+                });
+                
+                // Скроллим вниз только если нужно
+                if (scrollToBottom) {
+                    setTimeout(() => {
+                        scrollToBottomMessages();
+                    }, 100);
+                }
+            }
+            
+            updateActiveChat();
+        }
+        
+        // Функция для скролла вниз области сообщений
+        function scrollToBottomMessages() {
+            const messagesArea = document.getElementById('chatMessages');
+            if (messagesArea) {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }
+        }
+
+        // Отправка сообщения
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            // Проверяем, есть ли сообщение или прикрепленные файлы
+            if (!message && (!attachedFiles || attachedFiles.length === 0)) {
+                return;
+            }
+
+            if (!currentChatId) {
+                createNewChat();
+            }
+
+            const chat = chats.find(c => c.id === currentChatId);
+            if (!chat) {
+                console.error('Чат не найден');
+                return;
+            }
+            
+            // Сохраняем копию прикрепленных файлов перед обработкой
+            const filesToSend = attachedFiles ? [...attachedFiles] : [];
+            
+            // Проверка размера файлов перед отправкой
+            const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB на файл
+            const MAX_TOTAL_SIZE = 40 * 1024 * 1024; // 40 MB общий размер
+            
+            let totalSize = 0;
+            for (const file of filesToSend) {
+                if (file.size > MAX_FILE_SIZE) {
+                    alert(`Файл "${file.name}" слишком большой (${formatFileSize(file.size)}). Максимальный размер файла: ${formatFileSize(MAX_FILE_SIZE)}`);
+                    return;
+                }
+                totalSize += file.size;
+            }
+            
+            if (totalSize > MAX_TOTAL_SIZE) {
+                alert(`Общий размер файлов (${formatFileSize(totalSize)}) превышает допустимый лимит (${formatFileSize(MAX_TOTAL_SIZE)}). Пожалуйста, уменьшите количество или размер файлов.`);
+                return;
+            }
+
+            // Добавляем сообщение пользователя
+            const userMessage = {
+                text: message || (filesToSend.length > 0 ? 'Прикрепленные файлы' : ''),
+                isUser: true,
+                timestamp: new Date().toISOString(),
+                files: filesToSend.map(f => ({
+                    name: f.name,
+                    size: f.size,
+                    type: f.type
+                }))
+            };
+            
+            // Обрабатываем файлы для отправки (НЕ сохраняем base64 в localStorage!)
+            if (filesToSend.length > 0) {
+                Promise.all(filesToSend.map(fileObj => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            resolve({
+                                name: fileObj.name,
+                                size: fileObj.size,
+                                type: fileObj.type,
+                                data: e.target.result  // Используем только для отправки на сервер
+                            });
+                        };
+                        reader.onerror = function(e) {
+                            reject(e);
+                        };
+                        reader.readAsDataURL(fileObj.file);
+                    });
+                })).then(filesData => {
+                    // Сохраняем сообщение БЕЗ filesData (чтобы не переполнить localStorage)
+                    // filesData используется только для отправки на сервер
+                    chat.messages.push(userMessage);
+                    
+                    // Обновляем заголовок чата (первое сообщение)
+                    const displayText = message || (filesToSend.length > 0 ? filesToSend[0].name : '');
+                    if (chat.title === 'Новый чат' && displayText.length > 30) {
+                        chat.title = displayText.substring(0, 30) + '...';
+                    } else if (chat.title === 'Новый чат') {
+                        chat.title = displayText;
+                    }
+
+                    // Добавляем временный ответ AI (пока загружается)
+                    const aiMessage = {
+                        text: 'Думаю...',
+                        isUser: false,
+                        timestamp: new Date().toISOString()
+                    };
+                    chat.messages.push(aiMessage);
+                    
+                    // Сохраняем чат БЕЗ данных файлов
+                    saveChats();
+                    loadChat(currentChatId);
+                    
+                    // Отправляем запрос к AI с файлами (filesData не сохраняется в localStorage)
+                    sendMessageToAI(message, chat.messages.slice(0, -1), currentChatId, filesData);
+                    
+                    input.value = '';
+                    attachedFiles = [];
+                    renderAttachedFiles();
+                }).catch(error => {
+                    console.error('Ошибка при чтении файлов:', error);
+                    const errorMessage = error.message || 'Неизвестная ошибка';
+                    alert(`Произошла ошибка при обработке файлов:\n${errorMessage}\n\nПроверьте:\n- Размер файлов (рекомендуется до 10MB)\n- Формат файлов\n- Консоль браузера для деталей`);
+                });
+            } else {
+                // Нет файлов, просто отправляем сообщение
+                chat.messages.push(userMessage);
+                
+                // Обновляем заголовок чата (первое сообщение)
+                if (chat.title === 'Новый чат' && message.length > 30) {
+                    chat.title = message.substring(0, 30) + '...';
+                } else if (chat.title === 'Новый чат') {
+                    chat.title = message;
+                }
+
+                // Добавляем временный ответ AI (пока загружается)
+                const aiMessage = {
+                    text: 'Думаю...',
+                    isUser: false,
+                    timestamp: new Date().toISOString()
+                };
+                chat.messages.push(aiMessage);
+                saveChats();
+                loadChat(currentChatId);
+                
+                // Отправляем запрос к AI
+                sendMessageToAI(message, chat.messages.slice(0, -1), currentChatId, []);
+                
+                input.value = '';
+            }
+        }
+
+        // Функция для получения данных пользователя из localStorage
+        function getUserDataForAI() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return {};
+            
+            return {
+                receipts: JSON.parse(localStorage.getItem(`receipts_${email}`) || '[]'),
+                inventory: JSON.parse(localStorage.getItem(`inventory_${email}`) || '[]'),
+                employees: JSON.parse(localStorage.getItem(`employees_${email}`) || '[]'),
+                calendarEvents: JSON.parse(localStorage.getItem(`calendarEvents_${email}`) || '[]'),
+                taxesData: JSON.parse(localStorage.getItem('taxesData') || '{}'),
+                utilitiesData: JSON.parse(localStorage.getItem('utilitiesData') || '{}'),
+                documents: JSON.parse(localStorage.getItem(`documents_${email}`) || '[]'),
+                accountBalance: parseFloat(localStorage.getItem('accountBalance') || '0'),
+                accountBalance2: parseFloat(localStorage.getItem('accountBalance2') || '0')
+            };
+        }
+
+        // Функция для создания события в календаре
+        async function createCalendarEventFromAI(eventData) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return false;
+            
+            try {
+                const key = `calendarEvents_${email}`;
+                const events = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                // Форматируем дату в ISO формат, если нужно
+                let eventDate = eventData.date;
+                if (eventDate && !eventDate.includes('T')) {
+                    // Если дата без времени, добавляем время по умолчанию (12:00)
+                    if (eventDate.includes(' ')) {
+                        eventDate = new Date(eventDate).toISOString();
+                    } else {
+                        eventDate = new Date(eventDate + 'T12:00:00').toISOString();
+                    }
+                }
+                
+                const newEvent = {
+                    id: eventData.id || Date.now().toString(),
+                    title: eventData.title,
+                    date: eventDate,
+                    description: eventData.description || '',
+                    notified: false
+                };
+                
+                events.push(newEvent);
+                localStorage.setItem(key, JSON.stringify(events));
+                
+                // Обновляем календарь, если он открыт
+                if (window.opener && typeof window.opener.loadNotifications === 'function') {
+                    window.opener.loadNotifications();
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Ошибка при создании события:', error);
+                return false;
+            }
+        }
+        
+        // Функция для обновления события в календаре
+        async function updateCalendarEventFromAI(eventData) {
+            console.log('=== updateCalendarEventFromAI вызвана ===');
+            console.log('Данные события для обновления:', eventData);
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `calendarEvents_${email}`;
+                const events = JSON.parse(localStorage.getItem(key) || '[]');
+                console.log('Всего событий в календаре:', events.length);
+                console.log('Ищем событие с ID:', eventData.id);
+                
+                // Ищем событие по ID
+                const event = events.find(e => String(e.id) === String(eventData.id));
+                if (!event) {
+                    console.error('Событие не найдено! Искомый ID:', eventData.id);
+                    console.log('Доступные события:', events.map(e => ({ id: e.id, title: e.title })));
+                    return false;
+                }
+                
+                console.log('Событие найдено:', event);
+                console.log('Текущие данные события:', {
+                    title: event.title,
+                    date: event.date,
+                    description: event.description
+                });
+                
+                // Обновляем только указанные поля (проверяем наличие ключа в объекте)
+                // Название может быть пустой строкой для очистки
+                if ('title' in eventData && eventData.title !== null && eventData.title !== undefined) {
+                    const oldTitle = event.title || '';
+                    const newTitle = String(eventData.title).trim();
+                    event.title = newTitle;
+                    console.log('=== ОБНОВЛЕНИЕ НАЗВАНИЯ СОБЫТИЯ ===');
+                    console.log('  Старое название:', oldTitle);
+                    console.log('  Новое название:', newTitle);
+                    console.log('✅ Название успешно обновлено');
+                } else {
+                    console.log('Название не указано для обновления (ключ отсутствует или null)');
+                }
+                
+                // Обновляем дату, если она указана (проверяем наличие ключа)
+                if ('date' in eventData && eventData.date !== null && eventData.date !== undefined && eventData.date !== '') {
+                    let eventDate = String(eventData.date).trim();
+                    console.log('=== ОБНОВЛЕНИЕ ДАТЫ СОБЫТИЯ ===');
+                    console.log('Получена дата для обновления:', eventDate);
+                    console.log('Тип даты:', typeof eventData.date);
+                    console.log('Текущая дата события:', event.date);
+                    
+                    try {
+                        let parsedDate = null;
+                        const oldDate = event.date;
+                        
+                        // Нормализуем формат даты
+                        // Убираем лишние пробелы
+                        eventDate = eventDate.replace(/\s+/g, ' ').trim();
+                        
+                        // Если дата в формате YYYY-MM-DDTHH:mm (без секунд и временной зоны)
+                        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(eventDate)) {
+                            // Добавляем секунды и миллисекунды для правильного парсинга
+                            parsedDate = new Date(eventDate + ':00');
+                            console.log('Парсинг формата YYYY-MM-DDTHH:mm:', eventDate + ':00');
+                        }
+                        // Если дата в формате YYYY-MM-DDTHH:mm:ss
+                        else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(eventDate)) {
+                            parsedDate = new Date(eventDate);
+                            console.log('Парсинг формата YYYY-MM-DDTHH:mm:ss:', eventDate);
+                        }
+                        // Если дата в формате YYYY-MM-DD HH:mm (с пробелом)
+                        else if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/.test(eventDate)) {
+                            eventDate = eventDate.replace(/\s+/, 'T') + ':00';
+                            parsedDate = new Date(eventDate);
+                            console.log('Парсинг формата YYYY-MM-DD HH:mm:', eventDate);
+                        }
+                        // Если только дата YYYY-MM-DD, добавляем время 12:00
+                        else if (/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
+                            parsedDate = new Date(eventDate + 'T12:00:00');
+                            console.log('Парсинг формата YYYY-MM-DD (добавлено время 12:00):', eventDate + 'T12:00:00');
+                        }
+                        // Пытаемся распарсить как есть (для полных ISO строк)
+                        else {
+                            parsedDate = new Date(eventDate);
+                            console.log('Парсинг как есть:', eventDate);
+                        }
+                        
+                        if (parsedDate && !isNaN(parsedDate.getTime())) {
+                            const newDateISO = parsedDate.toISOString();
+                            event.date = newDateISO;
+                            console.log('✅ ДАТА УСПЕШНО ОБНОВЛЕНА!');
+                            console.log('  Старая дата:', oldDate);
+                            console.log('  Новая дата (ISO):', newDateISO);
+                            console.log('  Новая дата (читаемый формат):', parsedDate.toLocaleString('ru-RU', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }));
+                        } else {
+                            console.error('❌ НЕВАЛИДНАЯ ДАТА - не удалось распарсить:', eventDate);
+                            console.error('  Попытка парсинга вернула:', parsedDate);
+                        }
+                    } catch (e) {
+                        console.error('❌ ОШИБКА при парсинге даты:', e);
+                        console.error('  Исходная дата:', eventDate);
+                        console.error('  Стек ошибки:', e.stack);
+                    }
+                } else {
+                    console.log('Дата не указана для обновления (ключ отсутствует или значение пустое)');
+                }
+                
+                // Обновляем описание, если оно указано (включая пустую строку для очистки)
+                // Проверяем наличие ключа, чтобы отличить "не указано" от "пустая строка"
+                if ('description' in eventData && eventData.description !== null && eventData.description !== undefined) {
+                    const oldDescription = event.description || '';
+                    // Описание может быть пустой строкой (для очистки), поэтому не используем trim() если это важно
+                    // Но для обычных случаев используем trim() чтобы убрать лишние пробелы
+                    let newDescription = String(eventData.description);
+                    // Если это не пустая строка, обрезаем пробелы
+                    if (newDescription.trim() !== '') {
+                        newDescription = newDescription.trim();
+                    }
+                    event.description = newDescription;
+                    console.log('=== ОБНОВЛЕНИЕ ОПИСАНИЯ СОБЫТИЯ ===');
+                    console.log('  Старое описание:', oldDescription);
+                    console.log('  Новое описание:', newDescription);
+                    console.log('  Длина нового описания:', newDescription.length);
+                    console.log('✅ Описание успешно обновлено');
+                } else {
+                    console.log('Описание не указано для обновления (ключ отсутствует или null/undefined)');
+                    console.log('  eventData.description:', eventData.description);
+                    console.log('  "description" in eventData:', 'description' in eventData);
+                }
+                event.notified = false; // Сбрасываем уведомление при изменении
+                
+                // Сохраняем обновленные события
+                console.log('=== СОХРАНЕНИЕ СОБЫТИЯ ===');
+                console.log('Обновленное событие перед сохранением:', JSON.stringify(event, null, 2));
+                localStorage.setItem(key, JSON.stringify(events));
+                console.log('✅ События сохранены в localStorage');
+                
+                // Проверяем, что дата действительно обновилась
+                const savedEvents = JSON.parse(localStorage.getItem(key) || '[]');
+                const savedEvent = savedEvents.find(e => String(e.id) === String(eventData.id));
+                if (savedEvent) {
+                    console.log('=== ПРОВЕРКА СОХРАНЕННОГО СОБЫТИЯ ===');
+                    console.log('  ID:', savedEvent.id);
+                    console.log('  Название:', savedEvent.title);
+                    console.log('  Дата:', savedEvent.date);
+                    console.log('  Описание:', savedEvent.description);
+                } else {
+                    console.error('❌ ОШИБКА: Событие не найдено после сохранения!');
+                }
+                
+                // Обновляем календарь, если он открыт
+                if (window.opener && typeof window.opener.loadNotifications === 'function') {
+                    window.opener.loadNotifications();
+                }
+                if (window.opener && typeof window.opener.renderCalendar === 'function') {
+                    window.opener.renderCalendar();
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Ошибка при обновлении события:', error);
+                return false;
+            }
+        }
+
+        // Функция для отправки сообщения в AI через API
+        async function sendMessageToAI(message, chatHistory, chatId, attachedFilesData = []) {
+            try {
+                // Получаем данные пользователя
+                const userData = getUserDataForAI();
+                
+                // Подготавливаем файлы для отправки
+                // Убираем ограничение размера - сервер сам обработает большие файлы
+                const filesToSend = attachedFilesData.map(file => ({
+                    name: file.name || '',
+                    type: file.type || '',
+                    size: file.size || 0,
+                    data: file.data || '' // Отправляем полные данные файла
+                }));
+                
+                const response = await fetch('/api/chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        history: chatHistory,
+                        userData: userData,
+                        files: filesToSend
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Находим чат и обновляем последнее сообщение AI
+                const chat = chats.find(c => c.id === chatId);
+                if (chat && chat.messages.length > 0) {
+                    const lastMessage = chat.messages[chat.messages.length - 1];
+                    if (!lastMessage.isUser) {
+                        if (data.success) {
+                            lastMessage.text = data.response;
+                            
+                            // Обрабатываем действия (например, создание или обновление события)
+                            if (data.action) {
+                                if (data.action.action === 'create_event') {
+                                    const eventCreated = await createCalendarEventFromAI(data.action);
+                                    if (eventCreated) {
+                                        lastMessage.text += '\n\n✅ Событие "' + data.action.title + '" добавлено в календарь!';
+                                    }
+                                } else if (data.action.action === 'update_event') {
+                                    console.log('=== ОБНОВЛЕНИЕ СОБЫТИЯ ===');
+                                    console.log('Полные данные действия:', JSON.stringify(data.action, null, 2));
+                                    console.log('ID события:', data.action.id);
+                                    console.log('Новое название:', data.action.title, '(присутствует:', 'title' in data.action, ')');
+                                    console.log('Новая дата:', data.action.date, '(присутствует:', 'date' in data.action, ')');
+                                    console.log('Новое описание:', data.action.description, '(присутствует:', 'description' in data.action, ')');
+                                    
+                                    const eventUpdated = await updateCalendarEventFromAI(data.action);
+                                    console.log('Результат обновления:', eventUpdated);
+                                    
+                                    if (eventUpdated) {
+                                        const updates = [];
+                                        // Проверяем наличие ключей, а не только значений
+                                        // Название может быть пустой строкой (для очистки)
+                                        if ('title' in data.action && data.action.title !== null && data.action.title !== undefined) {
+                                            updates.push('название');
+                                        }
+                                        if ('date' in data.action && data.action.date !== null && data.action.date !== undefined && data.action.date !== '') {
+                                            updates.push('дату');
+                                        }
+                                        // Описание может быть пустой строкой (для очистки)
+                                        if ('description' in data.action && data.action.description !== null && data.action.description !== undefined) {
+                                            updates.push('описание');
+                                        }
+                                        console.log('Список обновлений:', updates);
+                                        
+                                        if (updates.length > 0) {
+                                            let updateMessage = '✅ Событие обновлено!';
+                                            if (updates.length === 1) {
+                                                updateMessage += ' Изменено: ' + updates[0] + '.';
+                                            } else if (updates.length === 2) {
+                                                updateMessage += ' Изменено: ' + updates.join(' и ') + '.';
+                                            } else {
+                                                updateMessage += ' Изменено: ' + updates.slice(0, -1).join(', ') + ' и ' + updates[updates.length - 1] + '.';
+                                            }
+                                            lastMessage.text += '\n\n' + updateMessage;
+                                        } else {
+                                            lastMessage.text += '\n\n⚠️ Событие найдено, но не было указано что изменить. Проверьте формат команды.';
+                                        }
+                                    } else {
+                                        lastMessage.text += '\n\n❌ Не удалось обновить событие. Возможно, событие не найдено.';
+                                    }
+                                }
+                            }
+                        } else {
+                            lastMessage.text = 'Извините, произошла ошибка: ' + (data.error || 'Неизвестная ошибка');
+                        }
+                        lastMessage.timestamp = new Date().toISOString();
+                        saveChats();
+                        loadChat(chatId, false); // Не скроллим при обновлении
+                        renderChatHistory();
+                        
+                        // Обновляем сообщение в UI и скроллим вниз
+                        const messagesArea = document.getElementById('chatMessages');
+                        if (messagesArea) {
+                            const messageDivs = messagesArea.querySelectorAll('.chat-message');
+                            if (messageDivs.length > 0) {
+                                const lastMessageDiv = messageDivs[messageDivs.length - 1];
+                                const messageTextDiv = lastMessageDiv.querySelector('.chat-message-text');
+                                if (messageTextDiv && !lastMessage.isUser) {
+                                    messageTextDiv.innerHTML = markdownToHTML(lastMessage.text);
+                                }
+                            }
+                            setTimeout(() => {
+                                scrollToBottomMessages();
+                            }, 100);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при отправке сообщения:', error);
+                // Обновляем сообщение об ошибке
+                const chat = chats.find(c => c.id === chatId);
+                if (chat && chat.messages.length > 0) {
+                    const lastMessage = chat.messages[chat.messages.length - 1];
+                    if (!lastMessage.isUser) {
+                        lastMessage.text = 'Ошибка подключения к AI. Убедитесь, что LM Studio запущен.';
+                        lastMessage.timestamp = new Date().toISOString();
+                        saveChats();
+                        loadChat(chatId, false); // Не скроллим при обновлении
+                        
+                        // Обновляем сообщение в UI и скроллим вниз
+                        const messagesArea = document.getElementById('chatMessages');
+                        if (messagesArea) {
+                            const messageDivs = messagesArea.querySelectorAll('.chat-message');
+                            if (messageDivs.length > 0) {
+                                const lastMessageDiv = messageDivs[messageDivs.length - 1];
+                                const messageTextDiv = lastMessageDiv.querySelector('.chat-message-text');
+                                if (messageTextDiv && !lastMessage.isUser) {
+                                    messageTextDiv.innerHTML = markdownToHTML(lastMessage.text);
+                                }
+                            }
+                            setTimeout(() => {
+                                scrollToBottomMessages();
+                            }, 100);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Функция для преобразования markdown в HTML
+        function markdownToHTML(text) {
+            if (!text) return '';
+            
+            let html = text;
+            
+            // Сначала обрабатываем многострочный код (чтобы не трогать его содержимое)
+            const codeBlocks = [];
+            html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+                const id = `CODEBLOCK_${codeBlocks.length}`;
+                const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                codeBlocks.push(`<pre class="markdown-code-block"><code>${escapedCode}</code></pre>`);
+                return id;
+            });
+            
+            // Обрабатываем инлайн код
+            const inlineCodes = [];
+            html = html.replace(/`([^`\n]+)`/g, (match, code) => {
+                const id = `INLINECODE_${inlineCodes.length}`;
+                const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                inlineCodes.push(`<code class="markdown-inline-code">${escapedCode}</code>`);
+                return id;
+            });
+            
+            // Экранируем HTML-теги для безопасности
+            html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // Восстанавливаем инлайн код
+            inlineCodes.forEach((code, index) => {
+                html = html.replace(`INLINECODE_${index}`, code);
+            });
+            
+            // Жирный текст: **текст** или __текст__
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+            
+            // Курсив: *текст* или _текст_ (упрощенная версия без lookbehind для совместимости)
+            html = html.replace(/(^|[^*])\*([^*\n]+?)\*([^*]|$)/g, '$1<em>$2</em>$3');
+            html = html.replace(/(^|[^_])_([^_\n]+?)_([^_]|$)/g, '$1<em>$2</em>$3');
+            
+            // Зачеркнутый текст: ~~текст~~
+            html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+            
+            // Восстанавливаем блоки кода
+            codeBlocks.forEach((code, index) => {
+                html = html.replace(`CODEBLOCK_${index}`, code);
+            });
+            
+            // Заголовки: # Заголовок, ## Подзаголовок и т.д.
+            html = html.replace(/^### (.+)$/gm, '<h3 class="markdown-h3">$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2 class="markdown-h2">$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1 class="markdown-h1">$1</h1>');
+            
+            // Списки: - элемент или * элемент
+            const lines = html.split('\n');
+            let inList = false;
+            const processedLines = [];
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const listMatch = line.match(/^[\*\-\+]\s+(.+)$/);
+                if (listMatch) {
+                    if (!inList) {
+                        inList = true;
+                        processedLines.push('<ul class="markdown-list"><li>' + listMatch[1] + '</li>');
+                    } else {
+                        processedLines.push('<li>' + listMatch[1] + '</li>');
+                    }
+                } else {
+                    if (inList) {
+                        inList = false;
+                        processedLines.push('</ul>');
+                    }
+                    processedLines.push(line);
+                }
+            }
+            if (inList) {
+                processedLines.push('</ul>');
+            }
+            html = processedLines.join('\n');
+            
+            // Нумерованные списки: 1. элемент
+            inList = false;
+            const processedLines2 = [];
+            const lines2 = html.split('\n');
+            for (let i = 0; i < lines2.length; i++) {
+                const line = lines2[i];
+                const listMatch = line.match(/^\d+\.\s+(.+)$/);
+                if (listMatch) {
+                    if (!inList) {
+                        inList = true;
+                        processedLines2.push('<ol class="markdown-list"><li>' + listMatch[1] + '</li>');
+                    } else {
+                        processedLines2.push('<li>' + listMatch[1] + '</li>');
+                    }
+                } else {
+                    if (inList) {
+                        inList = false;
+                        processedLines2.push('</ol>');
+                    }
+                    processedLines2.push(line);
+                }
+            }
+            if (inList) {
+                processedLines2.push('</ol>');
+            }
+            html = processedLines2.join('\n');
+            
+            // Ссылки: [текст](url)
+            html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="markdown-link">$1</a>');
+            
+            // Переносы строк - заменяем только одиночные переносы на <br>
+            // Двойные переносы уже обработаны при создании списков и заголовков
+            html = html.replace(/\n/g, '<br>');
+            
+            // Обертываем в параграф только если нет других блочных элементов
+            if (!html.match(/^<(h[1-6]|ul|ol|pre|p)/)) {
+                html = '<p class="markdown-paragraph">' + html + '</p>';
+            }
+            
+            return html;
+        }
+
+        // Добавление сообщения в UI
+        function addMessageToUI(text, isUser, files = null, filesData = null, autoScroll = true) {
+            const messagesArea = document.getElementById('chatMessages');
+            const welcomeDiv = document.getElementById('chatWelcome');
+            if (welcomeDiv) {
+                welcomeDiv.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${isUser ? 'chat-message-user' : 'chat-message-ai'}`;
+            
+            let filesHTML = '';
+            if (files && files.length > 0) {
+                filesHTML = '<div class="chat-message-files">';
+                files.forEach((file, index) => {
+                    const fileData = filesData && filesData[index] ? filesData[index] : null;
+                    if (fileData && fileData.data) {
+                        // Если есть данные файла (только для текущей сессии)
+                        if (file.type.startsWith('image/')) {
+                            filesHTML += `<div class="chat-message-file"><img src="${fileData.data}" alt="${file.name}" class="chat-message-file-image"></div>`;
+                        } else {
+                            filesHTML += `<div class="chat-message-file"><a href="${fileData.data}" download="${file.name}" class="chat-message-file-link">📎 ${file.name} (${formatFileSize(file.size)})</a></div>`;
+                        }
+                    } else {
+                        // Если данных нет (из истории чата) - показываем только метаданные
+                        if (file.type.startsWith('image/')) {
+                            filesHTML += `<div class="chat-message-file"><div class="chat-message-file-placeholder">🖼️ ${file.name} (${formatFileSize(file.size)})</div></div>`;
+                        } else {
+                            filesHTML += `<div class="chat-message-file"><div class="chat-message-file-placeholder">📎 ${file.name} (${formatFileSize(file.size)})</div></div>`;
+                        }
+                    }
+                });
+                filesHTML += '</div>';
+            }
+            
+            // Преобразуем markdown в HTML только для сообщений AI
+            const formattedText = isUser ? text : markdownToHTML(text);
+            
+            messageDiv.innerHTML = `
+                <div class="chat-message-content">
+                    ${formattedText ? `<div class="chat-message-text">${formattedText}</div>` : ''}
+                    ${filesHTML}
+                </div>
+            `;
+            messagesArea.appendChild(messageDiv);
+            
+            // Скроллим вниз только если нужно
+            if (autoScroll) {
+                setTimeout(() => {
+                    scrollToBottomMessages();
+                }, 50);
+            }
+        }
+
+        // Отображение истории чатов
+        function renderChatHistory() {
+            const historySection = document.getElementById('chatHistorySection');
+            if (!historySection) return;
+            
+            // Очищаем все существующие секции
+            historySection.innerHTML = '';
+
+            let filteredChats = chats;
+
+            // Фильтр по избранному
+            if (showFavoritesOnly) {
+                filteredChats = chats.filter(chat => favorites.includes(chat.id) || pinnedChats.includes(chat.id));
+            }
+
+            // Фильтр по поиску
+            if (searchQuery.trim()) {
+                filteredChats = filteredChats.filter(chat => 
+                    chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }
+
+            // Если показываем избранное
+            if (showFavoritesOnly) {
+                if (filteredChats.length > 0) {
+                    renderChatSection(historySection, 'Избранное', filteredChats);
+                }
+                return;
+            }
+
+            // Группировка чатов по датам (используем дату последнего сообщения)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            const todayChats = [];
+            const yesterdayChats = [];
+            const weekAgoChats = [];
+            const monthAgoChats = [];
+
+            // Получаем дату последнего сообщения или дату создания чата
+            filteredChats.forEach(chat => {
+                let chatDate;
+                if (chat.messages && chat.messages.length > 0) {
+                    // Используем дату последнего сообщения
+                    const lastMessage = chat.messages[chat.messages.length - 1];
+                    chatDate = new Date(lastMessage.timestamp);
+                } else {
+                    // Если сообщений нет, используем дату создания
+                    chatDate = new Date(chat.createdAt);
+                }
+                chatDate.setHours(0, 0, 0, 0);
+                const diffDays = Math.floor((today - chatDate) / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 0) {
+                    todayChats.push(chat);
+                } else if (diffDays === 1) {
+                    yesterdayChats.push(chat);
+                } else if (diffDays <= 7) {
+                    weekAgoChats.push(chat);
+                } else if (diffDays <= 30) {
+                    monthAgoChats.push(chat);
+                }
+            });
+
+            // Сортировка чатов внутри каждой категории по дате последнего сообщения (новые сверху)
+            const sortChatsByLastMessage = (chatsArray) => {
+                return chatsArray.sort((a, b) => {
+                    // Сначала закрепленные
+                    const aPinned = pinnedChats.includes(a.id);
+                    const bPinned = pinnedChats.includes(b.id);
+                    if (aPinned && !bPinned) return -1;
+                    if (!aPinned && bPinned) return 1;
+                    
+                    // Затем по дате последнего сообщения
+                    let aDate, bDate;
+                    if (a.messages && a.messages.length > 0) {
+                        aDate = new Date(a.messages[a.messages.length - 1].timestamp);
+                    } else {
+                        aDate = new Date(a.createdAt);
+                    }
+                    if (b.messages && b.messages.length > 0) {
+                        bDate = new Date(b.messages[b.messages.length - 1].timestamp);
+                    } else {
+                        bDate = new Date(b.createdAt);
+                    }
+                    return bDate - aDate; // Новые сверху
+                });
+            };
+
+            // Рендеринг секций в правильном порядке
+            if (todayChats.length > 0) {
+                renderChatSection(historySection, 'сегодня', sortChatsByLastMessage(todayChats));
+            }
+            if (yesterdayChats.length > 0) {
+                renderChatSection(historySection, 'вчера', sortChatsByLastMessage(yesterdayChats));
+            }
+            if (weekAgoChats.length > 0) {
+                renderChatSection(historySection, '7 дней назад', sortChatsByLastMessage(weekAgoChats));
+            }
+            if (monthAgoChats.length > 0) {
+                renderChatSection(historySection, '30 дней назад', sortChatsByLastMessage(monthAgoChats));
+            }
+        }
+
+        // Рендеринг секции чатов
+        function renderChatSection(container, title, chats) {
+            const section = document.createElement('div');
+            section.className = 'chat-history-section';
+            section.innerHTML = `
+                <div class="chat-history-title">${title}</div>
+                <div class="chat-history-items"></div>
+            `;
+            const itemsContainer = section.querySelector('.chat-history-items');
+            
+            // Чаты уже отсортированы в renderChatHistory, просто используем их
+            const sortedChats = chats;
+            
+            sortedChats.forEach(chat => {
+                const item = document.createElement('div');
+                item.className = 'chat-history-item';
+                item.dataset.chatId = chat.id;
+                if (chat.id === currentChatId) {
+                    item.classList.add('active');
+                }
+                // Убрали класс pinned, так как красная линия только для активного чата
+                
+                const isPinned = pinnedChats.includes(chat.id);
+                const isFavorite = favorites.includes(chat.id);
+                
+                item.innerHTML = `
+                    <div class="chat-history-item-content">
+                        <span class="chat-history-item-title">${chat.title}</span>
+                        <div class="chat-history-item-actions">
+                            <button class="chat-pin-btn" data-chat-id="${chat.id}" title="${isPinned ? 'Открепить' : 'Закрепить'}">
+                                <img src="${IMAGE_PATHS.zakrep2}" alt="${isPinned ? 'Открепить' : 'Закрепить'}" class="chat-action-icon">
+                            </button>
+                            <button class="chat-edit-btn" data-chat-id="${chat.id}" title="Редактировать">
+                                <img src="${IMAGE_PATHS.red}" alt="Редактировать" class="chat-action-icon">
+                            </button>
+                            <button class="chat-delete-btn" data-chat-id="${chat.id}" title="Удалить">
+                                <img src="${IMAGE_PATHS.udalit}" alt="Удалить" class="chat-action-icon">
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                item.addEventListener('click', (e) => {
+                    if (!e.target.closest('.chat-pin-btn') && 
+                        !e.target.closest('.chat-edit-btn') && 
+                        !e.target.closest('.chat-delete-btn')) {
+                        loadChat(chat.id);
+                    }
+                });
+                
+                const pinBtn = item.querySelector('.chat-pin-btn');
+                pinBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    togglePin(chat.id);
+                });
+                
+                const editBtn = item.querySelector('.chat-edit-btn');
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editChatTitle(chat.id);
+                });
+                
+                const deleteBtn = item.querySelector('.chat-delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteChat(chat.id);
+                });
+                
+                itemsContainer.appendChild(item);
+            });
+            
+            container.appendChild(section);
+        }
+
+        // Переключение закрепления
+        function togglePin(chatId) {
+            const index = pinnedChats.indexOf(chatId);
+            if (index > -1) {
+                pinnedChats.splice(index, 1);
+                // Убираем из избранного при откреплении
+                const favIndex = favorites.indexOf(chatId);
+                if (favIndex > -1) {
+                    favorites.splice(favIndex, 1);
+                    saveUserFavorites(favorites);
+                }
+            } else {
+                pinnedChats.push(chatId);
+                // Добавляем в избранное при закреплении
+                if (!favorites.includes(chatId)) {
+                    favorites.push(chatId);
+                    saveUserFavorites(favorites);
+                }
+            }
+            saveUserPinnedChats(pinnedChats);
+            renderChatHistory();
+        }
+
+        // Редактирование названия чата
+        let editingChatId = null;
+
+        function editChatTitle(chatId) {
+            const chat = chats.find(c => c.id === chatId);
+            if (!chat) return;
+
+            editingChatId = chatId;
+            document.getElementById('editChatTitleInput').value = chat.title;
+            document.getElementById('editChatModal').style.display = 'flex';
+        }
+
+        function closeEditChatModal() {
+            document.getElementById('editChatModal').style.display = 'none';
+            editingChatId = null;
+            document.getElementById('editChatTitleInput').value = '';
+        }
+
+        document.getElementById('saveEditChatBtn').addEventListener('click', () => {
+            if (editingChatId) {
+                const newTitle = document.getElementById('editChatTitleInput').value.trim();
+                const chat = chats.find(c => c.id === editingChatId);
+                if (chat && newTitle && newTitle !== chat.title) {
+                    chat.title = newTitle;
+                    saveChats();
+                    renderChatHistory();
+                    if (currentChatId === editingChatId) {
+                        loadChat(editingChatId);
+                    }
+                }
+                closeEditChatModal();
+            }
+        });
+
+        // Закрытие модального окна редактирования при клике вне его
+        document.getElementById('editChatModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editChatModal') {
+                closeEditChatModal();
+            }
+        });
+
+        // Сохранение по Enter в поле редактирования
+        document.getElementById('editChatTitleInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('saveEditChatBtn').click();
+            }
+        });
+
+        // Модальное окно подтверждения
+        let confirmCallback = null;
+
+        function showConfirmModal(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            document.getElementById('confirmModal').style.display = 'flex';
+            confirmCallback = callback;
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirmBtn').addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+                closeConfirmModal();
+            }
+        });
+
+        // Закрытие модального окна при клике вне его
+        document.getElementById('confirmModal').addEventListener('click', (e) => {
+            if (e.target.id === 'confirmModal') {
+                closeConfirmModal();
+            }
+        });
+
+        // Удаление чата
+        function deleteChat(chatId) {
+            showConfirmModal('Вы уверены, что хотите удалить этот чат?', () => {
+                const chatIndex = chats.findIndex(c => c.id === chatId);
+                if (chatIndex > -1) {
+                    chats.splice(chatIndex, 1);
+                    saveChats();
+
+                    // Удаляем из избранного и закрепленных
+                    const favIndex = favorites.indexOf(chatId);
+                    if (favIndex > -1) {
+                        favorites.splice(favIndex, 1);
+                        saveUserFavorites(favorites);
+                    }
+                    const pinIndex = pinnedChats.indexOf(chatId);
+                    if (pinIndex > -1) {
+                        pinnedChats.splice(pinIndex, 1);
+                        saveUserPinnedChats(pinnedChats);
+                    }
+
+                    // Если удалили текущий чат, загружаем другой или создаем новый
+                    if (currentChatId === chatId) {
+                        if (chats.length > 0) {
+                            loadChat(chats[0].id);
+                        } else {
+                            currentChatId = null;
+                            const messagesArea = document.getElementById('chatMessages');
+                            messagesArea.innerHTML = `
+                                <div class="chat-ai-widget-main" id="chatWelcome">
+                                    <div class="chat-ai-icon-main">
+                                        <span class="chat-ai-icon-text-main">AI</span>
+                                    </div>
+                                    <div class="chat-ai-prompt">С чего начнём, Босс?</div>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    renderChatHistory();
+                }
+            });
+        }
+
+        // Переключение избранного
+        function toggleFavorite(chatId) {
+            const index = favorites.indexOf(chatId);
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                favorites.push(chatId);
+            }
+            saveUserFavorites(favorites);
+            renderChatHistory();
+        }
+
+        // Обновление активного чата
+        function updateActiveChat() {
+            document.querySelectorAll('.chat-history-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (currentChatId) {
+                const activeItem = document.querySelector(`[data-chat-id="${currentChatId}"]`)?.closest('.chat-history-item');
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                }
+            }
+        }
+
+        // Обработка прикрепления файлов
+        function handleFileAttach() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.click();
+        }
+
+        // Обработка выбранных файлов
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB на файл
+                const MAX_TOTAL_SIZE = 40 * 1024 * 1024; // 40 MB общий размер
+                
+                let totalSize = attachedFiles.reduce((sum, f) => sum + f.size, 0);
+                const rejectedFiles = [];
+                
+                files.forEach(file => {
+                    if (file.size > MAX_FILE_SIZE) {
+                        rejectedFiles.push(`${file.name} (${formatFileSize(file.size)})`);
+                    } else if (totalSize + file.size > MAX_TOTAL_SIZE) {
+                        rejectedFiles.push(`${file.name} (превышен общий лимит)`);
+                    } else {
+                        attachedFiles.push({
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            file: file
+                        });
+                        totalSize += file.size;
+                    }
+                });
+                
+                if (rejectedFiles.length > 0) {
+                    alert(`Некоторые файлы не были добавлены:\n${rejectedFiles.join('\n')}\n\nМаксимальный размер файла: ${formatFileSize(MAX_FILE_SIZE)}\nМаксимальный общий размер: ${formatFileSize(MAX_TOTAL_SIZE)}`);
+                }
+                
+                renderAttachedFiles();
+                // Сброс input для возможности повторного выбора того же файла
+                e.target.value = '';
+            }
+        });
+
+        // Отображение прикрепленных файлов
+        function renderAttachedFiles() {
+            const attachedFilesDiv = document.getElementById('attachedFiles');
+            if (attachedFiles.length === 0) {
+                attachedFilesDiv.style.display = 'none';
+                return;
+            }
+
+            attachedFilesDiv.style.display = 'block';
+            attachedFilesDiv.innerHTML = attachedFiles.map((file, index) => `
+                <div class="attached-file-item">
+                    <span class="attached-file-name">${file.name}</span>
+                    <span class="attached-file-size">${formatFileSize(file.size)}</span>
+                    <button type="button" class="attached-file-remove" onclick="removeAttachedFile(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Удаление прикрепленного файла (глобальная функция для onclick)
+        window.removeAttachedFile = function(index) {
+            if (attachedFiles && attachedFiles.length > index) {
+                attachedFiles.splice(index, 1);
+                renderAttachedFiles();
+                // Сброс input для возможности повторного выбора того же файла
+                document.getElementById('fileInput').value = '';
+            }
+        };
+
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Переключение режима избранного
+        function toggleFavoritesMode() {
+            showFavoritesOnly = !showFavoritesOnly;
+            const favoritesBtn = document.getElementById('favoritesBtn');
+            if (showFavoritesOnly) {
+                favoritesBtn.classList.add('active');
+            } else {
+                favoritesBtn.classList.remove('active');
+            }
+            renderChatHistory();
+        }
+
+        // Обработка поиска
+        function handleSearch() {
+            searchQuery = document.getElementById('chatSearchInput').value;
+            renderChatHistory();
+        }
+
+        // Обработчики событий
+        document.getElementById('attachBtn').addEventListener('click', handleFileAttach);
+        document.getElementById('chatSendBtn').addEventListener('click', sendMessage);
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        document.querySelector('.chat-new-chat-btn').addEventListener('click', createNewChat);
+        document.getElementById('favoritesBtn').addEventListener('click', toggleFavoritesMode);
+        document.getElementById('chatSearchInput').addEventListener('input', handleSearch);
+
+        // Переключение темы в чате
+        function toggleChatTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+            updateThemeButtonText();
+        }
+
+        // Обновление текста кнопки темы
+        function updateThemeButtonText() {
+            const theme = localStorage.getItem('theme') || 'light';
+            const themeBtnText = document.getElementById('chatThemeBtnText');
+            
+            if (themeBtnText) {
+                themeBtnText.textContent = theme === 'dark' ? 'Темная' : 'Светлая';
+            }
+        }
+
+        // Применение темы
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+        }
+
+
+
+        // Автоматическое обновление истории каждую минуту для корректной сортировки
+        setInterval(() => {
+            renderChatHistory();
+        }, 60000); // Обновляем каждую минуту
+
+        // Инициализация при загрузке
+        // Очищаем старые данные файлов один раз при загрузке
+        cleanupOldFileData();
+        initChat();
+        
+        // Применение сохраненной темы при загрузке
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        applyTheme(savedTheme);
+        updateThemeButtonText();
+        
+        // Функция для открытия/закрытия сайдбара на мобильных
+        function toggleChatSidebar() {
+            const sidebar = document.getElementById('chatSidebar');
+            const overlay = document.getElementById('chatSidebarOverlay');
+            const burgerBtn = document.getElementById('chatBurgerBtn');
+            
+            if (sidebar && overlay && burgerBtn) {
+                const isOpen = sidebar.classList.contains('chat-sidebar-open');
+                if (isOpen) {
+                    sidebar.classList.remove('chat-sidebar-open');
+                    overlay.classList.remove('chat-sidebar-overlay-active');
+                    burgerBtn.classList.remove('chat-burger-active');
+                } else {
+                    sidebar.classList.add('chat-sidebar-open');
+                    overlay.classList.add('chat-sidebar-overlay-active');
+                    burgerBtn.classList.add('chat-burger-active');
+                }
+            }
+        }
+        
+        // Закрытие сайдбара при клике на ссылку в сайдбаре (на мобильных и планшетах)
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.chat-sidebar a, .chat-sidebar button');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    // Небольшая задержка для плавного закрытия
+                    setTimeout(() => {
+                        if (window.innerWidth <= 768) {
+                            toggleChatSidebar();
+                        }
+                    }, 100);
+                });
+            });
+            
+            // Закрытие сайдбара при изменении размера окна (если перешли на десктоп)
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    const sidebar = document.getElementById('chatSidebar');
+                    const overlay = document.getElementById('chatSidebarOverlay');
+                    const burgerBtn = document.getElementById('chatBurgerBtn');
+                    if (sidebar && overlay && burgerBtn) {
+                        sidebar.classList.remove('chat-sidebar-open');
+                        overlay.classList.remove('chat-sidebar-overlay-active');
+                        burgerBtn.classList.remove('chat-burger-active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,1018 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="cabinet-page">
+    <!-- Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <a href="{% url 'index' %}" class="cabinet-logo-link">
+                        <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                    </a>
+                </h1>
+                <p class="cabinet-subtitle">Личный кабинет</p>
+            </div>
+            <div class="cabinet-header-right">
+                
+            </div>
+        </div>
+    </header>
+
+    <!-- Sticky Navigation Bar -->
+    <div class="cabinet-sticky-nav-wrapper">
+        <div class="cabinet-sticky-nav-container">
+            <nav class="cabinet-nav">
+                <a href="#calendar" class="cabinet-nav-link">Календарь</a>
+                <a href="#finance" class="cabinet-nav-link">Финансы</a>
+                <a href="#documents" class="cabinet-nav-link">Документы</a>
+                <a href="#communication" class="cabinet-nav-link">Связь</a>
+            </nav>
+            <div class="cabinet-sticky-right">
+                <div class="cabinet-notification-icon-sticky" id="notificationIconSticky" onclick="toggleNotifications()">
+                    <img src="{% static 'images/kollokol.png' %}" alt="Уведомления" class="notification-bell">
+                    <span class="notification-badge" id="notificationBadgeSticky" style="display: none;">0</span>
+                </div>
+                <button class="cabinet-profile-btn-sticky" onclick="toggleProfileModal()">Профиль</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky AI Widget -->
+    <div class="cabinet-sticky-ai-wrapper">
+        <a href="{% url 'chat' %}" class="cabinet-ai-widget-link">
+            <div class="cabinet-ai-widget">
+                <div class="cabinet-ai-icon">
+                    <span class="cabinet-ai-icon-text">Ai</span>
+                </div>
+                <div class="cabinet-ai-text">
+                    <div class="cabinet-ai-title">AI- помощник</div>
+                    <div class="cabinet-ai-subtitle">ИИ-бот даст ответы на интересующие вас вопросы</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <!-- Calendar Section -->
+            <section id="calendar" class="cabinet-section">
+                <h2 class="cabinet-section-title">Календарь</h2>
+                <a href="{% url 'calendar' %}" class="cabinet-feature-btn" style="text-decoration: none; display: block;">
+                    <span class="cabinet-feature-icon">
+                        <img src="{% static 'images/kal.jpg' %}" alt="Календарь">
+                    </span>
+                    <div class="cabinet-feature-content">
+                        <div class="cabinet-feature-title">Календарь планов и встреч</div>
+                        <div class="cabinet-feature-subtitle">Планируй встречи и помечай важные события</div>
+                    </div>
+                </a>
+            </section>
+
+            <!-- Finance Section -->
+            <section id="finance" class="cabinet-section cabinet-section-finance">
+                <h2 class="cabinet-section-title cabinet-section-title-red">Финансы</h2>
+                <div class="cabinet-finance-info">
+                    <div class="cabinet-account-box">
+                        <div class="cabinet-account-info">
+                            <div class="cabinet-account-label">Комбо-счет</div>
+                            <div class="cabinet-accounts-switcher">
+                                <button class="cabinet-account-switch-btn active" id="account1Btn" onclick="switchAccount(1)">
+                                    <span class="cabinet-account-switch-number">1234</span>
+                                    <span class="cabinet-account-switch-amount" id="account1Balance">237 000 ₽</span>
+                                </button>
+                                <button class="cabinet-account-switch-btn" id="account2Btn" onclick="switchAccount(2)">
+                                    <span class="cabinet-account-switch-number">5678</span>
+                                    <span class="cabinet-account-switch-amount" id="account2Balance">50 000 ₽</span>
+                                </button>
+                            </div>
+                        </div>
+                        <a href="{% url 'transfer' %}" class="cabinet-account-transfer-link">
+                            <div class="cabinet-account-number">Перевести</div>
+                        </a>
+                    </div>
+                    <div class="cabinet-debt-box" id="totalDebtBox">
+                        Задолженность 0 ₽
+                    </div>
+                </div>
+                <div class="cabinet-feature-buttons">
+                    <a href="{% url 'taxes' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/nv.png' %}" alt="Налоговые выплаты">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Налоговые выплаты</div>
+                            <div class="cabinet-feature-subtitle">Налоговые выплаты</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'utilities' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/ku.png' %}" alt="Коммунальные услуги">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Коммунальные услуги</div>
+                            <div class="cabinet-feature-subtitle">Оплата комунальных услуг, просмотр квитанций</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'receipts' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/ch.png' %}" alt="Чеки">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Чеки</div>
+                            <div class="cabinet-feature-subtitle">Чеки выплат, поступление оплат</div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Documents Section -->
+            <section id="documents" class="cabinet-section">
+                <h2 class="cabinet-section-title">Документы</h2>
+                <div class="cabinet-feature-buttons">
+                    <a href="{% url 'documents' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/dog.png' %}" alt="Договора">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Договора</div>
+                            <div class="cabinet-feature-subtitle">Договора с организациями и партнерами</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'inventory' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/inv.png' %}" alt="Инвентаризация">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Инвентаризация</div>
+                            <div class="cabinet-feature-subtitle">Учет товара и инвентаря</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'employees' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/sotr.png' %}" alt="Сотрудники">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Сотрудники</div>
+                            <div class="cabinet-feature-subtitle">Учет сотрудников и выплат</div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Communication Section -->
+            <section id="communication" class="cabinet-section">
+                <h2 class="cabinet-section-title">Связь</h2>
+                <div class="cabinet-feature-buttons">
+                    <a href="{% url 'mail' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/poch.png' %}" alt="Почта">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Почта</div>
+                            <div class="cabinet-feature-subtitle">Общение с организациями и контрагентами</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'feedback' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/obr.png' %}" alt="Обратная связь">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Обратная связь</div>
+                            <div class="cabinet-feature-subtitle">Обратная связь с потребителями</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'support' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/pod.png' %}" alt="Поддержка">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Поддержка</div>
+                            <div class="cabinet-feature-subtitle">При возникновении проблем, обратитесь в поддержку</div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Security Notice -->
+            <div class="cabinet-security-notice">
+                <span class="cabinet-security-icon">
+                    <img src="{% static 'images/shit.png' %}" alt="Безопасность">
+                </span>
+                <span class="cabinet-security-text" data-i18n="security-text">Мы гарантируем безопасность и сохранность ваших данных</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notifications Popup -->
+    <div class="notifications-popup" id="notificationsPopup" style="display: none;">
+        <div class="notifications-popup-header">
+            <h3 class="notifications-popup-title">Уведомления</h3>
+            <button class="notifications-popup-close" onclick="toggleNotifications()">←</button>
+        </div>
+        <div class="notifications-popup-content" id="notificationsContent">
+            <!-- Уведомления будут добавлены через JavaScript -->
+        </div>
+        <div class="notifications-empty" id="notificationsEmpty" style="display: none;">
+            <p>Нет уведомлений</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-chat-link">
+            <a href="{% url 'chat' %}" class="footer-chat-button" data-i18n="go-to-chat">Перейти в чат</a>
+        </div>
+        <div class="footer-content">
+            <div class="footer-column">
+                <h4 class="footer-heading" data-i18n="contact-bank">СВЯЗЬ С БАНКОМ</h4>
+                <a href="#" class="footer-link" data-i18n="call-bank">Звонок в банк</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading" data-i18n="official-site">ОФИЦИАЛЬНЫЙ САЙТ</h4>
+                <a href="#" class="footer-link" data-i18n="alfa-bank">Альфа-Банк</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading" data-i18n="location">МЕСТОПОЛОЖЕНИЕ</h4>
+                <p class="footer-text">Нижневартовск</p>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading" data-i18n="social-networks">НАШИ СОЦСЕТИ</h4>
+                <div class="footer-social">
+                    <a href="#" class="social-icon social-telegram">
+                        <img src="{% static 'images/tg.png' %}" alt="Telegram">
+                    </a>
+                    <a href="#" class="social-icon social-vk">
+                        <img src="{% static 'images/vk.png' %}" alt="VKontakte">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-legal">
+            <p>© 2001-2025. АО «Альфа-Банк», официальный сайт. Генеральная лицензия Банка России № 1326 от 16 января 2015 г. АО «Альфа-Банк» является участником системы обязательного страхования вкладов. <a href="#">Информация о процентных ставках по договорам банковского вклада с физическими лицами.</a> <a href="#">Центр раскрытия корпоративной информации.</a> <a href="#">Раскрытие информации профессионального участника рынка ценных бумаг.</a> <a href="#">Информация о лицах, под контролем либо значительным влиянием которых находится Банк.</a> Ул. Каланчёвская, 27, Москва, 107078.</p>
+            <p>АО «Альфа-Банк» является оператором по обработке персональных данных, информация об обработке персональных данных и сведения о реализуемых требованиях к защите персональных данных отражены в <a href="#">Политике в отношении обработки персональных данных.</a></p>
+            <p>АО «Альфа-Банк» использует файлы «cookie» с целью персонализации сервисов и повышения <a href="#">удобства пользования веб-сайтом.</a> Если вы не хотите, чтобы ваши пользовательские данные обрабатывались, пожалуйста, ограничьте их использование в своём браузере.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Получаем текущий выбранный счет
+        function getCurrentAccount() {
+            return parseInt(localStorage.getItem('currentAccount') || '1');
+        }
+
+        // Сохраняем текущий выбранный счет
+        function setCurrentAccount(accountNum) {
+            localStorage.setItem('currentAccount', accountNum.toString());
+        }
+
+        // Получаем баланс счета
+        function getAccountBalance(accountNum) {
+            const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+            const savedBalance = localStorage.getItem(key);
+            if (savedBalance) {
+                return parseFloat(savedBalance);
+            }
+            return accountNum === 1 ? 237000 : 50000;
+        }
+
+        // Сохраняем баланс счета
+        function setAccountBalance(accountNum, balance) {
+            const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+            localStorage.setItem(key, balance.toString());
+        }
+
+        // Функция для обновления отображения балансов
+        function updateBalances() {
+            const balance1 = getAccountBalance(1);
+            const balance2 = getAccountBalance(2);
+            
+            document.getElementById('account1Balance').textContent = 
+                new Intl.NumberFormat('ru-RU').format(balance1) + ' ₽';
+            document.getElementById('account2Balance').textContent = 
+                new Intl.NumberFormat('ru-RU').format(balance2) + ' ₽';
+        }
+
+        // Функция для расчета общей задолженности
+        function calculateTotalDebt() {
+            let totalDebt = 0;
+            const PENALTY_RATE = 0.15;
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+
+            // Расчет задолженности по коммунальным услугам
+            const utilitiesData = JSON.parse(localStorage.getItem('utilitiesData') || '{}');
+            const utilities = [
+                { id: 'electricity', basePrice: 5000 },
+                { id: 'water', basePrice: 3000 },
+                { id: 'heating', basePrice: 8000 },
+                { id: 'waste', basePrice: 2000 },
+                { id: 'security', basePrice: 6000 },
+                { id: 'internet', basePrice: 1500 }
+            ];
+
+            utilities.forEach(util => {
+                const utilData = utilitiesData[util.id];
+                if (utilData) {
+                    const daysSincePayment = utilData.lastPayment ? 
+                        Math.floor((now - utilData.lastPayment) / oneDay) : 
+                        Math.floor((now - utilData.lastUpdate) / oneDay);
+                    const daysOverdue = Math.max(0, daysSincePayment - 30);
+                    const penalty = utilData.debt * PENALTY_RATE * daysOverdue;
+                    totalDebt += utilData.debt + penalty;
+                }
+            });
+
+            // Расчет задолженности по налогам
+            const taxesData = JSON.parse(localStorage.getItem('taxesData') || '{}');
+            const taxes = [
+                { id: 'profit', basePrice: 50000 },
+                { id: 'vat', basePrice: 35000 },
+                { id: 'property', basePrice: 25000 },
+                { id: 'insurance', basePrice: 40000 }
+            ];
+
+            taxes.forEach(tax => {
+                const taxData = taxesData[tax.id];
+                if (taxData) {
+                    const daysSincePayment = taxData.lastPayment ? 
+                        Math.floor((now - taxData.lastPayment) / oneDay) : 
+                        Math.floor((now - taxData.lastUpdate) / oneDay);
+                    const daysOverdue = Math.max(0, daysSincePayment - 30);
+                    const penalty = taxData.debt * PENALTY_RATE * daysOverdue;
+                    totalDebt += taxData.debt + penalty;
+                }
+            });
+
+            return totalDebt;
+        }
+
+        // Функция для обновления отображения задолженности
+        function updateTotalDebt() {
+            const totalDebt = calculateTotalDebt();
+            const debtBox = document.getElementById('totalDebtBox');
+            
+            if (debtBox) {
+                const formattedDebt = new Intl.NumberFormat('ru-RU').format(Math.round(totalDebt));
+                debtBox.textContent = 'Задолженность ' + formattedDebt + ' ₽';
+            }
+        }
+
+        // Переключение между счетами
+        function switchAccount(accountNum) {
+            setCurrentAccount(accountNum);
+            
+            // Обновляем активную кнопку
+            document.getElementById('account1Btn').classList.toggle('active', accountNum === 1);
+            document.getElementById('account2Btn').classList.toggle('active', accountNum === 2);
+        }
+
+        // Обновляем балансы при загрузке страницы
+        updateBalances();
+        
+        // Устанавливаем активный счет
+        const currentAccount = getCurrentAccount();
+        switchAccount(currentAccount);
+
+        // Обновляем задолженность при загрузке страницы
+        updateTotalDebt();
+
+        // Обновляем балансы и задолженность при возврате на страницу (через событие focus)
+        window.addEventListener('focus', function() {
+            updateBalances();
+            updateTotalDebt();
+        });
+
+        // Обновляем балансы и задолженность при изменении localStorage (если открыто несколько вкладок)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'accountBalance' || e.key === 'accountBalance2' || 
+                e.key === 'utilitiesData' || e.key === 'taxesData') {
+                updateBalances();
+                updateTotalDebt();
+            }
+        });
+
+        // Обновляем задолженность каждую минуту
+        setInterval(updateTotalDebt, 60000);
+
+        // Функции для работы с уведомлениями
+        function toggleNotifications() {
+            const popup = document.getElementById('notificationsPopup');
+            if (popup.style.display === 'none') {
+                loadNotifications();
+                popup.style.display = 'block';
+            } else {
+                popup.style.display = 'none';
+            }
+        }
+
+        function loadNotifications() {
+            const content = document.getElementById('notificationsContent');
+            const empty = document.getElementById('notificationsEmpty');
+            content.innerHTML = '';
+
+            let notifications = [];
+            let savedNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+
+            // Уведомления о задолженностях
+            const totalDebt = calculateTotalDebt();
+            if (totalDebt > 0) {
+                // Проверяем, есть ли уже уведомление о задолженности
+                let debtNotification = savedNotifications.find(n => n.type === 'debt' && !n.read);
+                
+                const formattedDebt = new Intl.NumberFormat('ru-RU').format(Math.round(totalDebt));
+                const debtMessage = `Общая задолженность: ${formattedDebt} ₽`;
+                
+                if (!debtNotification) {
+                    // Создаем новое уведомление
+                    debtNotification = {
+                        id: 'debt-' + Date.now(),
+                        type: 'debt',
+                        title: 'Задолженность',
+                        message: debtMessage,
+                        date: new Date().toLocaleString('ru-RU'),
+                        read: false
+                    };
+                    savedNotifications.push(debtNotification);
+                    localStorage.setItem('notifications', JSON.stringify(savedNotifications));
+                } else {
+                    // Обновляем существующее уведомление
+                    debtNotification.title = 'Задолженность';
+                    debtNotification.message = debtMessage;
+                    debtNotification.date = new Date().toLocaleString('ru-RU');
+                    localStorage.setItem('notifications', JSON.stringify(savedNotifications));
+                }
+            } else {
+                // Удаляем уведомления о задолженности, если долга нет
+                savedNotifications = savedNotifications.filter(n => n.type !== 'debt');
+                localStorage.setItem('notifications', JSON.stringify(savedNotifications));
+            }
+
+            // Уведомления о событиях календаря текущего пользователя
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            const calendarEventsKey = email ? `calendarEvents_${email}` : 'calendarEvents';
+            const calendarEvents = JSON.parse(localStorage.getItem(calendarEventsKey) || '[]');
+            const now = new Date();
+            
+            calendarEvents.forEach(event => {
+                if (!event || !event.date) return;
+                
+                const eventDate = new Date(event.date);
+                if (isNaN(eventDate.getTime())) return;
+                
+                const timeDiff = eventDate.getTime() - now.getTime();
+                const hoursUntil = timeDiff / (1000 * 60 * 60);
+                
+                // Уведомление за 24 часа до события
+                if (hoursUntil > 0 && hoursUntil <= 24) {
+                    // Проверяем, есть ли уже уведомление для этого события
+                    let eventNotification = savedNotifications.find(n => n.type === 'calendar' && n.eventId === event.id && !n.read);
+                    
+                    if (!eventNotification) {
+                        // Создаем новое уведомление
+                        const eventTitle = event.title || 'Событие';
+                        const eventDescription = event.description ? ` - ${event.description}` : '';
+                        eventNotification = {
+                            id: 'event-' + event.id + '-' + Date.now(),
+                            type: 'calendar',
+                            title: 'Событие в календаре',
+                            message: `Напоминание: ${eventTitle}${eventDescription} - ${eventDate.toLocaleString('ru-RU', { 
+                                year: 'numeric', 
+                                month: '2-digit', 
+                                day: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            })}`,
+                            date: new Date().toLocaleString('ru-RU'),
+                            read: false,
+                            eventId: event.id
+                        };
+                        savedNotifications.push(eventNotification);
+                        localStorage.setItem('notifications', JSON.stringify(savedNotifications));
+                    }
+                }
+            });
+
+            // Загружаем ВСЕ непрочитанные уведомления из localStorage
+            savedNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            savedNotifications.forEach(notif => {
+                if (!notif.read) {
+                    // Проверяем, нет ли уже этого уведомления в массиве
+                    const exists = notifications.find(n => n.id === notif.id);
+                    if (!exists) {
+                        notifications.push(notif);
+                    }
+                }
+            });
+
+            // Сортируем по дате (новые сверху)
+            notifications.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateB - dateA;
+            });
+
+            if (notifications.length === 0) {
+                content.style.display = 'none';
+                empty.style.display = 'block';
+            } else {
+                content.style.display = 'block';
+                empty.style.display = 'none';
+
+                notifications.forEach(notif => {
+                    const notifItem = document.createElement('div');
+                    notifItem.className = `notification-item notification-${notif.type}`;
+                    notifItem.innerHTML = `
+                        <div class="notification-item-content">
+                            <div class="notification-item-title">${escapeHtml(notif.title || 'Уведомление')}</div>
+                            <div class="notification-item-message">${escapeHtml(notif.message || '')}</div>
+                            <div class="notification-item-date">${escapeHtml(notif.date || '')}</div>
+                        </div>
+                        <button class="notification-item-delete" onclick="deleteNotification('${notif.id}')">×</button>
+                    `;
+                    content.appendChild(notifItem);
+                });
+            }
+
+            // Обновляем счетчик
+            updateNotificationBadge(notifications.filter(n => !n.read).length);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function deleteNotification(id) {
+            let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            notifications = notifications.filter(n => n.id !== id);
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            loadNotifications();
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            const badgeSticky = document.getElementById('notificationBadgeSticky');
+            
+            if (count > 0) {
+                if (badge) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.style.display = 'block';
+                }
+                if (badgeSticky) {
+                    badgeSticky.textContent = count > 99 ? '99+' : count;
+                    badgeSticky.style.display = 'block';
+                }
+            } else {
+                if (badge) badge.style.display = 'none';
+                if (badgeSticky) badgeSticky.style.display = 'none';
+            }
+        }
+
+        // Проверяем уведомления при загрузке и каждую минуту
+        loadNotifications();
+        setInterval(loadNotifications, 60000);
+        
+        // Обновляем уведомления при изменении localStorage (например, при добавлении события в календаре)
+        window.addEventListener('storage', function(e) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            const calendarEventsKey = email ? `calendarEvents_${email}` : 'calendarEvents';
+            if (e.key === calendarEventsKey || e.key === 'notifications') {
+                loadNotifications();
+            }
+        });
+        
+        // Также обновляем при фокусе на окне (на случай, если календарь открыт в той же вкладке)
+        window.addEventListener('focus', function() {
+            loadNotifications();
+        });
+
+        // Плавная прокрутка к секциям при клике на пункты меню
+        document.querySelectorAll('.cabinet-nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                
+                if (targetSection) {
+                    const navHeight = document.querySelector('.cabinet-sticky-nav-wrapper').offsetHeight;
+                    const aiHeight = document.querySelector('.cabinet-sticky-ai-wrapper').offsetHeight;
+                    const offset = navHeight + aiHeight + 20; // Добавляем отступ
+                    
+                    const targetPosition = targetSection.offsetTop - offset;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Profile Modal Functions
+        function toggleProfileModal() {
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+                if (modal.style.display === 'flex') {
+                    updateProfileInfo();
+                }
+            }
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function updateProfileInfo() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const orgName = document.getElementById('profileOrgName');
+            const orgEmail = document.getElementById('profileEmail');
+            
+            if (orgName) orgName.textContent = currentUser.organization || 'Не указано';
+            if (orgEmail) orgEmail.textContent = currentUser.email || 'Не указано';
+        }
+
+
+
+        function toggleTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+            updateThemeToggle();
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.documentElement.classList.remove('dark-theme');
+            }
+        }
+
+        function updateThemeToggle() {
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            
+            if (themeToggle) {
+                themeToggle.textContent = currentTheme === 'light' ? 'Светлая' : 'Темная';
+            }
+            
+            // Update theme label
+            const themeMenuItems = document.querySelectorAll('.profile-menu-item');
+            themeMenuItems.forEach(item => {
+                const toggle = item.querySelector('#themeToggle');
+                if (toggle) {
+                    const themeText = item.querySelector('.profile-menu-text');
+                    if (themeText) {
+                        themeText.innerHTML = 'Тема: <span id="themeToggle">' + (currentTheme === 'light' ? 'Светлая' : 'Темная') + '</span>';
+                    }
+                }
+            });
+        }
+
+        function logout() {
+            showConfirmProfileModal('Вы уверены, что хотите выйти?', function() {
+                localStorage.removeItem('currentUser');
+                window.location.href = "{% url 'index' %}";
+            });
+        }
+
+        function openEditProfile() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.email === currentUser.email);
+            
+            if (user) {
+                document.getElementById('editOrganization').value = user.organization || '';
+                document.getElementById('editEmail').value = user.email || '';
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editConfirmPassword').value = '';
+            }
+            
+            document.getElementById('editProfileModal').style.display = 'flex';
+        }
+
+        function closeEditProfile() {
+            document.getElementById('editProfileModal').style.display = 'none';
+        }
+
+        function saveProfileChanges() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            const organization = document.getElementById('editOrganization').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const password = document.getElementById('editPassword').value;
+            const confirmPassword = document.getElementById('editConfirmPassword').value;
+            
+            if (!organization) {
+                showErrorModal('Наименование организации не может быть пустым');
+                return;
+            }
+            
+            if (!email) {
+                showErrorModal('Email не может быть пустым');
+                return;
+            }
+            
+            if (password && password !== confirmPassword) {
+                showErrorModal('Пароли не совпадают');
+                return;
+            }
+            
+            // Находим пользователя в списке
+            const userIndex = users.findIndex(u => u.email === currentUser.email);
+            
+            if (userIndex === -1) {
+                showErrorModal('Пользователь не найден');
+                return;
+            }
+            
+            // Проверяем, не занят ли новый email другим пользователем
+            if (email !== currentUser.email) {
+                const emailExists = users.find(u => u.email === email && u.email !== currentUser.email);
+                if (emailExists) {
+                    showErrorModal('Пользователь с таким email уже существует');
+                    return;
+                }
+            }
+            
+            // Показываем окно подтверждения поверх окна редактирования
+            showConfirmProfileModal('Вы уверены, что хотите сохранить изменения в профиле?', function() {
+                // Обновляем данные пользователя
+                users[userIndex].organization = organization;
+                users[userIndex].email = email;
+                if (password) {
+                    users[userIndex].password = password;
+                }
+                
+                // Сохраняем обновленный список пользователей
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                // Обновляем текущего пользователя
+                const updatedUser = {
+                    organization: organization,
+                    email: email
+                };
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                
+                // Обновляем отображение в модальном окне профиля
+                updateProfileInfo();
+                
+                // Закрываем модальное окно подтверждения
+                closeConfirmProfileModal();
+                
+                // Закрываем модальное окно редактирования
+                closeEditProfile();
+                
+                showSuccessModal('Профиль успешно обновлен');
+            });
+        }
+
+        function showErrorModal(message) {
+            const modal = document.getElementById('errorModal');
+            const messageEl = document.getElementById('errorMessage');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function showSuccessModal(message) {
+            const modal = document.getElementById('successModal');
+            const messageEl = document.getElementById('successMessage');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function showConfirmProfileModal(message, onConfirm) {
+            const modal = document.getElementById('confirmProfileModal');
+            const messageEl = document.getElementById('confirmProfileMessage');
+            const titleEl = document.querySelector('#confirmProfileModal .confirm-modal-title');
+            
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (titleEl) {
+                titleEl.textContent = 'Подтверждение';
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+                // Сохраняем callback для подтверждения
+                window.confirmProfileCallback = onConfirm;
+            }
+        }
+
+        function closeConfirmProfileModal() {
+            const modal = document.getElementById('confirmProfileModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            window.confirmProfileCallback = null;
+        }
+
+        function confirmProfileAction() {
+            if (window.confirmProfileCallback) {
+                window.confirmProfileCallback();
+            }
+        }
+
+        // Initialize theme on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            
+            applyTheme(savedTheme);
+            updateThemeToggle();
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const profileModal = document.getElementById('profileModal');
+            const editProfileModal = document.getElementById('editProfileModal');
+            const confirmProfileModal = document.getElementById('confirmProfileModal');
+            const errorModal = document.getElementById('errorModal');
+            const successModal = document.getElementById('successModal');
+            
+            // Не закрываем модальное окно, если клик был на кнопке внутри него
+            if (event.target.closest('.profile-menu-item')) {
+                return;
+            }
+            
+            // Не закрываем окно редактирования, если открыто окно подтверждения
+            if (event.target === editProfileModal && confirmProfileModal.style.display !== 'flex') {
+                closeEditProfile();
+            }
+            
+            if (event.target === profileModal) {
+                closeProfileModal();
+            }
+            
+            if (event.target === confirmProfileModal) {
+                closeConfirmProfileModal();
+            }
+            
+            if (event.target === errorModal) {
+                closeErrorModal();
+            }
+            
+            if (event.target === successModal) {
+                closeSuccessModal();
+            }
+        });
+    </script>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="profile-modal" style="display: none;">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <h3 class="profile-modal-title" data-i18n="profile-modal-title">Профиль</h3>
+                <button class="profile-modal-close" onclick="closeProfileModal()">←</button>
+            </div>
+            <div class="profile-modal-body">
+                <div class="profile-info">
+                    <div class="profile-org-name" id="profileOrgName" data-i18n="not-specified">Не указано</div>
+                    <div class="profile-email" id="profileEmail" data-i18n="not-specified">Не указано</div>
+                </div>
+                <div class="profile-menu">
+                    <button class="profile-menu-item" onclick="openEditProfile()">
+                        <span class="profile-menu-text" data-i18n="edit-profile">Редактировать профиль</span>
+                    </button>
+                    <button class="profile-menu-item" onclick="toggleTheme()">
+                        <span class="profile-menu-text"><span data-i18n="theme">Тема</span>: <span id="themeToggle">Светлая</span></span>
+                    </button>
+                    <button class="profile-menu-item profile-menu-item-logout" onclick="logout()">
+                        <span class="profile-menu-text" data-i18n="logout">Выйти</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="profile-modal" style="display: none;">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <h3 class="profile-modal-title" data-i18n="edit-profile-title">Редактировать профиль</h3>
+                <button class="profile-modal-close" onclick="closeEditProfile()">←</button>
+            </div>
+            <div class="profile-modal-body">
+                <form class="edit-profile-form" onsubmit="event.preventDefault(); saveProfileChanges();">
+                    <div class="edit-profile-group">
+                        <label class="edit-profile-label" data-i18n="org-name">Наименование организации</label>
+                        <input type="text" class="edit-profile-input" id="editOrganization" data-i18n-placeholder="org-name" placeholder="Наименование организации" required>
+                    </div>
+                    <div class="edit-profile-group">
+                        <label class="edit-profile-label" data-i18n="email">Электронная почта</label>
+                        <input type="email" class="edit-profile-input" id="editEmail" data-i18n-placeholder="email" placeholder="Электронная почта" required>
+                    </div>
+                    <div class="edit-profile-group">
+                        <label class="edit-profile-label" data-i18n="new-password">Новый пароль (оставьте пустым, чтобы не менять)</label>
+                        <input type="password" class="edit-profile-input" id="editPassword" data-i18n-placeholder="new-password" placeholder="Новый пароль">
+                    </div>
+                    <div class="edit-profile-group">
+                        <label class="edit-profile-label" data-i18n="confirm-password">Подтвердите новый пароль</label>
+                        <input type="password" class="edit-profile-input" id="editConfirmPassword" data-i18n-placeholder="confirm-password" placeholder="Подтвердите новый пароль">
+                    </div>
+                    <div class="edit-profile-actions">
+                        <button type="button" class="edit-profile-btn edit-profile-btn-cancel" onclick="closeEditProfile()" data-i18n="cancel">Отмена</button>
+                        <button type="submit" class="edit-profile-btn edit-profile-btn-save" data-i18n="save">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Profile Changes Modal -->
+    <div id="confirmProfileModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title" data-i18n="confirm-title">Подтверждение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="confirmProfileMessage">Вы уверены, что хотите сохранить изменения в профиле?</p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmProfileModal()" data-i18n="cancel">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" onclick="confirmProfileAction()" data-i18n="confirm">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title" data-i18n="error-title">Ошибка</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="errorMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-confirm" onclick="closeErrorModal()" style="width: 100%;" data-i18n="ok">ОК</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title" data-i18n="success-title">Успешно</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="successMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-confirm" onclick="closeSuccessModal()" style="width: 100%;" data-i18n="ok">ОК</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

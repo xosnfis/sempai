@@ -1,0 +1,177 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Альфа-Ассистент - ИИ-помощник для бизнеса</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        .hero-background {
+            background-image: url('{% static "images/glavfon.jpg" %}?v={{ cache_version }}') !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-background">
+            <div class="network-pattern"></div>
+        </div>
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="title-red">А</span>льфа-Ассистент
+            </h1>
+            <p class="hero-subtitle">Меньше рутины — больше результатов</p>
+            <p class="hero-description">ИИ-помощник отвечает на вопросы и помогает вести бизнес</p>
+            <p class="hero-description">эффективнее.</p>
+        </div>
+    </section>
+
+    <!-- Welcome Section -->
+    <section class="welcome-section">
+        <div class="welcome-card">
+            <div class="bookmark-icon"></div>
+            <h2 class="welcome-title">Добро пожаловать!</h2>
+            <p class="welcome-text">Мы верим, что будущее за умными технологиями.</p>
+            <p class="welcome-text">Наш AI-чат-бот — это ваш персональный бизнес-ассистент, который всегда рядом: отвечает, анализирует, помогает.</p>
+            <p class="welcome-text">Попробуйте — и убедитесь, как просто сделать работу эффективнее с помощью искусственного интеллекта.</p>
+            <a href="{% url 'login' %}" class="cta-button">Перейти в кабинет</a>
+        </div>
+    </section>
+
+    <!-- Advantages Section -->
+    <section class="advantages-section">
+        <h2 class="advantages-title">Плюсы бизнес помощника:</h2>
+        <div class="advantages-content">
+            <div class="advantages-list">
+                <div class="advantage-item">
+                    <span class="advantage-number">1.</span>
+                    <div class="advantage-text">
+                        <h3 class="advantage-title">Автоматизирует рутину</h3>
+                        <p class="advantage-description">Не нужно тратить часы на отчёты, счета и переписку. Помощник делает это сам — быстро и без ошибок.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <span class="advantage-number">2.</span>
+                    <div class="advantage-text">
+                        <h3 class="advantage-title">Анализирует финансы в реальном времени</h3>
+                        <p class="advantage-description">Показывает, куда уходят деньги, где можно сэкономить и как увеличить прибыль.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <span class="advantage-number">3.</span>
+                    <div class="advantage-text">
+                        <h3 class="advantage-title">Подсказывает решения, а не просто цифры</h3>
+                        <p class="advantage-description">Искусственный интеллект сравнивает данные, ищет закономерности и предлагает конкретные шаги.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <span class="advantage-number">4.</span>
+                    <div class="advantage-text">
+                        <h3 class="advantage-title">Работает 24/7 без перерывов</h3>
+                        <p class="advantage-description">Не устает, не заболел, не ушёл в отпуск — всегда рядом и готов помочь.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <span class="advantage-number">5.</span>
+                    <div class="advantage-text">
+                        <h3 class="advantage-title">Помогает планировать развитие</h3>
+                        <p class="advantage-description">Прогнозы, цели, сценарии и стратегии — всё понятно и визуально.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="advantages-illustration">
+                <img src="{% static 'images/ai_bot.png' %}" alt="Иллюстрация">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <h2 class="features-title">Что умеет личный кабинет</h2>
+        <div class="features-grid">
+            <div class="feature-card feature-card-light">
+                <h3 class="feature-card-title">Документы</h3>
+                <p class="feature-card-description">Все важные документы хранятся в безопасном облачном хранилище.</p>
+                <ul class="feature-list">
+                    <li>Безопасное хранение</li>
+                    <li>Автоматическая синхронизация</li>
+                    <li>Быстрый поиск документов</li>
+                    <li>Доступ с любого устройства</li>
+                </ul>
+            </div>
+            <div class="feature-card feature-card-dark">
+                <h3 class="feature-card-title">Календарь</h3>
+                <p class="feature-card-description">Планируйте встречи, дедлайны и важные события.</p>
+                <ul class="feature-list">
+                    <li>Планирование встреч</li>
+                    <li>Синхронизация календарей</li>
+                    <li>Управление дедлайнами</li>
+                </ul>
+            </div>
+            <div class="feature-card feature-card-dark">
+                <h3 class="feature-card-title">Финансы</h3>
+                <p class="feature-card-description">Быстрая и безопасная оплата услуг.</p>
+                <ul class="feature-list">
+                    <li>Автоматические напоминания</li>
+                    <li>Оплата в один клик</li>
+                    <li>Безопасные платежи</li>
+                    <li>История платежей</li>
+                </ul>
+            </div>
+            <div class="feature-card feature-card-light">
+                <h3 class="feature-card-title">Чат-помощник</h3>
+                <p class="feature-card-description">ИИ-чат помощник всегда готов ответить на ваши вопросы</p>
+                <ul class="feature-list">
+                    <li>Круглосуточная поддержка</li>
+                    <li>Мгновенные ответы</li>
+                    <li>Решение любых вопросов</li>
+                    <li>Помощник на базе ИИ</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-column">
+                <h4 class="footer-heading">СВЯЗЬ С БАНКОМ</h4>
+                <a href="#" class="footer-link">Звонок в банк</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">ОФИЦИАЛЬНЫЙ САЙТ</h4>
+                <a href="#" class="footer-link">Альфа-Банк</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">МЕСТОПОЛОЖЕНИЕ</h4>
+                <p class="footer-text">Нижневартовск</p>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">НАШИ СОЦСЕТИ</h4>
+                <div class="footer-social">
+                    <a href="#" class="social-icon social-telegram">
+                        <img src="{% static 'images/tg.png' %}" alt="Telegram">
+                    </a>
+                    <a href="#" class="social-icon social-vk">
+                        <img src="{% static 'images/vk.png' %}" alt="VKontakte">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-legal">
+            <p>© 2001-2025. АО «Альфа-Банк», официальный сайт. Генеральная лицензия Банка России № 1326 от 16 января 2015 г. АО «Альфа-Банк» является участником системы обязательного страхования вкладов. <a href="#">Информация о процентных ставках по договорам банковского вклада с физическими лицами.</a> <a href="#">Центр раскрытия корпоративной информации.</a> <a href="#">Раскрытие информации профессионального участника рынка ценных бумаг.</a> <a href="#">Информация о лицах, под контролем либо значительным влиянием которых находится Банк.</a> Ул. Каланчёвская, 27, Москва, 107078.</p>
+            <p>АО «Альфа-Банк» является оператором по обработке персональных данных, информация об обработке персональных данных и сведения о реализуемых требованиях к защите персональных данных отражены в <a href="#">Политике в отношении обработки персональных данных.</a></p>
+            <p>АО «Альфа-Банк» использует файлы «cookie» с целью персонализации сервисов и повышения <a href="#">удобства пользования веб-сайтом.</a> Если вы не хотите, чтобы ваши пользовательские данные обрабатывались, пожалуйста, ограничьте их использование в своём браузере.</p>
+        </div>
+    </footer>
+</body>
+</html>
+
