@@ -1,0 +1,724 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сотрудники - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Система модальных окон -->
+    <script src="{% static 'js/modal.js' %}?v={{ cache_version }}"></script>
+</head>
+<body class="cabinet-page">
+    <!-- Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                </h1>
+                <p class="cabinet-subtitle">Сотрудники</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <div class="employees-container">
+                <div class="employees-header">
+                    <a href="{% url 'cabinet' %}" class="employees-back-link">← Назад в личный кабинет</a>
+                </div>
+
+                <!-- Add Employee Section -->
+                <div class="employees-add-section">
+                    <h2 class="employees-section-title">Добавить сотрудника</h2>
+                    <form class="employees-add-form" id="addEmployeeForm">
+                        <div class="employees-form-row">
+                            <div class="employees-form-group">
+                                <label for="employeeFIO" class="employees-label">ФИО</label>
+                                <input type="text" id="employeeFIO" class="employees-input" placeholder="Введите ФИО" required>
+                            </div>
+                            <div class="employees-form-group">
+                                <label for="employeePhone" class="employees-label">Телефон</label>
+                                <input type="tel" id="employeePhone" class="employees-input" placeholder="+7 (999) 999-99-99" required>
+                            </div>
+                            <div class="employees-form-group">
+                                <label for="employeeEmail" class="employees-label">Почта</label>
+                                <input type="email" id="employeeEmail" class="employees-input" placeholder="email@example.com" required>
+                            </div>
+                            <div class="employees-form-group">
+                                <label for="employeeSalary" class="employees-label">Зарплата (₽)</label>
+                                <input type="number" id="employeeSalary" class="employees-input" placeholder="0.00" min="0" step="0.01" required>
+                            </div>
+                            <div class="employees-form-group">
+                                <label for="employeeFolder" class="employees-label">Должность</label>
+                                <select id="employeeFolder" class="employees-select">
+                                    <option value="">Без должности</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="employees-form-actions">
+                            <button type="submit" class="employees-add-btn">Добавить</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Employees List Section -->
+                <div class="employees-list-section">
+                    <div class="employees-list-header">
+                        <h2 class="employees-section-title">Сотрудники</h2>
+                        <button class="employees-add-folder-btn" onclick="openFolderModal()">+ Создать должность</button>
+                    </div>
+                    <div class="employees-list" id="employeesList">
+                        <!-- Сотрудники будут добавлены через JavaScript -->
+                    </div>
+                    <div class="employees-empty" id="employeesEmpty" style="display: none;">
+                        <p>Нет сотрудников</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Folder Modal -->
+    <div class="employees-folder-modal" id="folderModal" style="display: none;">
+        <div class="employees-folder-modal-content">
+            <div class="employees-folder-modal-header">
+                <h3 class="employees-folder-modal-title">Создать должность</h3>
+                <button class="employees-folder-modal-close" onclick="closeFolderModal()">×</button>
+            </div>
+            <form class="employees-folder-modal-form" id="folderForm">
+                <div class="employees-folder-form-group">
+                    <label for="folderName" class="employees-folder-label">Название должности</label>
+                    <input type="text" id="folderName" class="employees-folder-input" placeholder="Введите название должности" required>
+                </div>
+                <div class="employees-folder-form-actions">
+                    <button type="button" class="employees-folder-btn employees-folder-btn-cancel" onclick="closeFolderModal()">Отмена</button>
+                    <button type="submit" class="employees-folder-btn employees-folder-btn-save">Создать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Employee Modal -->
+    <div class="employees-edit-modal" id="editEmployeeModal" style="display: none;">
+        <div class="employees-edit-modal-content">
+            <div class="employees-edit-modal-header">
+                <h3 class="employees-edit-modal-title">Редактировать сотрудника</h3>
+                <button class="employees-edit-modal-close" onclick="closeEditEmployeeModal()">×</button>
+            </div>
+            <form class="employees-edit-modal-form" id="editEmployeeForm">
+                <div class="employees-edit-form-group">
+                    <label for="editEmployeeFIO" class="employees-edit-label">ФИО</label>
+                    <input type="text" id="editEmployeeFIO" class="employees-edit-input" required>
+                </div>
+                <div class="employees-edit-form-group">
+                    <label for="editEmployeePhone" class="employees-edit-label">Телефон</label>
+                    <input type="tel" id="editEmployeePhone" class="employees-edit-input" required>
+                </div>
+                <div class="employees-edit-form-group">
+                    <label for="editEmployeeEmail" class="employees-edit-label">Почта</label>
+                    <input type="email" id="editEmployeeEmail" class="employees-edit-input" required>
+                </div>
+                <div class="employees-edit-form-group">
+                    <label for="editEmployeeSalary" class="employees-edit-label">Зарплата (₽)</label>
+                    <input type="number" id="editEmployeeSalary" class="employees-edit-input" min="0" step="0.01" required>
+                </div>
+                <div class="employees-edit-form-group">
+                    <label for="editEmployeeFolder" class="employees-edit-label">Должность</label>
+                    <select id="editEmployeeFolder" class="employees-edit-select">
+                        <option value="">Без должности</option>
+                    </select>
+                </div>
+                <div class="employees-edit-form-actions">
+                    <button type="button" class="employees-edit-btn employees-edit-btn-cancel" onclick="closeEditEmployeeModal()">Отмена</button>
+                    <button type="submit" class="employees-edit-btn employees-edit-btn-save">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pay Salary Modal -->
+    <div class="employees-pay-modal" id="paySalaryModal" style="display: none;">
+        <div class="employees-pay-modal-content">
+            <div class="employees-pay-modal-header">
+                <h3 class="employees-pay-modal-title">Выплатить зарплату</h3>
+                <button class="employees-pay-modal-close" onclick="closePaySalaryModal()">×</button>
+            </div>
+            <div class="employees-pay-modal-body">
+                <p class="employees-pay-employee-name" id="payEmployeeName"></p>
+                <p class="employees-pay-amount">Сумма: <span id="payAmount"></span> ₽</p>
+                <p class="employees-pay-warning">Сумма будет списана с выбранного счета</p>
+            </div>
+            <div class="employees-pay-modal-actions">
+                <button type="button" class="employees-pay-btn employees-pay-btn-cancel" onclick="closePaySalaryModal()">Отмена</button>
+                <button type="button" class="employees-pay-btn employees-pay-btn-confirm" onclick="confirmPaySalary()">Выплатить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Пути к изображениям для сотрудников
+        const EMPLOYEES_IMAGE_PATHS = {
+            zp: "{% static 'images/zp.png' %}",
+            red: "{% static 'images/red.svg' %}",
+            udalit: "{% static 'images/udalit.png' %}"
+        };
+        
+        let employees = [];
+        let folders = [];
+        let editingEmployeeId = null;
+        let payingEmployeeId = null;
+
+        // Получить сотрудников текущего пользователя
+        function getUserEmployees() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return [];
+            const key = `employees_${email}`;
+            const saved = localStorage.getItem(key);
+            return saved ? JSON.parse(saved) : [];
+        }
+        
+        // Сохранить сотрудников текущего пользователя
+        function saveUserEmployees(employeesArray) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return;
+            const key = `employees_${email}`;
+            localStorage.setItem(key, JSON.stringify(employeesArray));
+        }
+        
+        // Получить папки сотрудников текущего пользователя
+        function getUserEmployeeFolders() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return [];
+            const key = `employeeFolders_${email}`;
+            const saved = localStorage.getItem(key);
+            return saved ? JSON.parse(saved) : [];
+        }
+        
+        // Сохранить папки сотрудников текущего пользователя
+        function saveUserEmployeeFolders(foldersArray) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return;
+            const key = `employeeFolders_${email}`;
+            localStorage.setItem(key, JSON.stringify(foldersArray));
+        }
+
+        // Загрузка данных из localStorage
+        function loadData() {
+            employees = getUserEmployees();
+            folders = getUserEmployeeFolders();
+            updateFolderSelects();
+            renderEmployees();
+            checkSalaryNotifications();
+        }
+
+        // Сохранение данных в localStorage
+        function saveData() {
+            saveUserEmployees(employees);
+            saveUserEmployeeFolders(folders);
+        }
+
+        // Обновление списков папок в select
+        function updateFolderSelects() {
+            const selects = document.querySelectorAll('#employeeFolder, #editEmployeeFolder');
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Без должности</option>';
+                folders.forEach(folder => {
+                    const option = document.createElement('option');
+                    option.value = folder.id;
+                    option.textContent = folder.name;
+                    select.appendChild(option);
+                });
+                select.value = currentValue;
+            });
+        }
+
+        // Форматирование числа
+        function formatNumber(num) {
+            return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+        }
+
+        // Получение текущего счета
+        function getCurrentAccount() {
+            return parseInt(localStorage.getItem('currentAccount') || '1');
+        }
+
+        // Получение баланса счета
+        function getAccountBalance(accountNum) {
+            const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+            const savedBalance = localStorage.getItem(key);
+            if (savedBalance) {
+                return parseFloat(savedBalance);
+            }
+            return accountNum === 1 ? 237000 : 50000;
+        }
+
+        // Установка баланса счета
+        function setAccountBalance(accountNum, balance) {
+            const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+            localStorage.setItem(key, balance.toString());
+        }
+
+        // Отображение сотрудников
+        function renderEmployees() {
+            const list = document.getElementById('employeesList');
+            const empty = document.getElementById('employeesEmpty');
+            list.innerHTML = '';
+
+            // Разделяем сотрудников по должностям
+            const employeesByFolder = {};
+            const employeesWithoutFolder = [];
+
+            employees.forEach(employee => {
+                if (employee.folderId) {
+                    if (!employeesByFolder[employee.folderId]) {
+                        employeesByFolder[employee.folderId] = [];
+                    }
+                    employeesByFolder[employee.folderId].push(employee);
+                } else {
+                    employeesWithoutFolder.push(employee);
+                }
+            });
+
+            if (employees.length === 0 && folders.length === 0) {
+                list.style.display = 'none';
+                empty.style.display = 'block';
+            } else {
+                list.style.display = 'block';
+                empty.style.display = 'none';
+
+                // Отображаем должности
+                folders.forEach(folder => {
+                    const folderEmployees = employeesByFolder[folder.id] || [];
+                    const folderElement = createFolderElement(folder, folderEmployees);
+                    list.appendChild(folderElement);
+                });
+
+                // Отображаем сотрудников без должности
+                employeesWithoutFolder.forEach(employee => {
+                    const employeeElement = createEmployeeElement(employee);
+                    list.appendChild(employeeElement);
+                });
+            }
+        }
+
+        // Создание элемента должности
+        function createFolderElement(folder, folderEmployees) {
+            const folderDiv = document.createElement('div');
+            folderDiv.className = 'employees-folder';
+            folderDiv.dataset.folderId = folder.id;
+
+            const totalSalary = folderEmployees.reduce((sum, emp) => sum + (emp.salary || 0), 0);
+            const employeesCount = folderEmployees.length;
+
+            folderDiv.innerHTML = `
+                <div class="employees-folder-header">
+                    <div class="employees-folder-header-left" onclick="toggleFolder('${folder.id}')">
+                        <div class="employees-folder-info">
+                            <span class="employees-folder-icon">💼</span>
+                            <span class="employees-folder-name">${folder.name}</span>
+                            <span class="employees-folder-count">(${employeesCount} ${employeesCount === 1 ? 'сотрудник' : employeesCount === 0 ? 'пусто' : 'сотрудников'})</span>
+                        </div>
+                        <div class="employees-folder-stats">
+                            ${employeesCount > 0 ? `
+                                <span class="employees-folder-total">Всего зарплат: ${formatNumber(totalSalary)} ₽</span>
+                            ` : '<span class="employees-folder-empty">Должность пуста</span>'}
+                            <span class="employees-folder-toggle">▼</span>
+                        </div>
+                    </div>
+                    <button class="employees-folder-delete-btn" onclick="event.stopPropagation(); deleteFolder('${folder.id}')" title="Удалить должность">×</button>
+                </div>
+                <div class="employees-folder-content" id="folderContent-${folder.id}" style="display: ${employeesCount > 0 ? 'none' : 'block'};">
+                    ${employeesCount > 0 ? folderEmployees.map(emp => createEmployeeHTML(emp)).join('') : '<div class="employees-folder-empty-message">Должность пуста</div>'}
+                </div>
+            `;
+
+            return folderDiv;
+        }
+
+        // Создание HTML элемента сотрудника
+        function createEmployeeHTML(employee) {
+            const lastPaymentDate = employee.lastPaymentDate ? new Date(employee.lastPaymentDate) : null;
+            const nextPaymentDate = lastPaymentDate ? new Date(lastPaymentDate.getTime() + 30 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            const now = new Date();
+            const daysUntilPayment = Math.ceil((nextPaymentDate - now) / (1000 * 60 * 60 * 24));
+            const needsPayment = daysUntilPayment <= 0;
+            const paymentStatus = needsPayment ? 'payment-due' : daysUntilPayment <= 7 ? 'payment-soon' : 'payment-ok';
+
+            return `
+                <div class="employees-item ${paymentStatus}" data-employee-id="${employee.id}">
+                    <div class="employees-item-content">
+                        <div class="employees-item-name">${employee.fio}</div>
+                        <div class="employees-item-details">
+                            <span class="employees-item-phone">📞 ${employee.phone}</span>
+                            <span class="employees-item-email">✉️ ${employee.email}</span>
+                            <span class="employees-item-salary">💰 Зарплата: ${formatNumber(employee.salary)} ₽</span>
+                        </div>
+                        ${lastPaymentDate ? `
+                            <div class="employees-item-payment-info">
+                                <span>Последняя выплата: ${lastPaymentDate.toLocaleDateString('ru-RU')}</span>
+                                <span class="employees-item-next-payment ${paymentStatus}">
+                                    ${needsPayment ? '⚠️ Требуется выплата' : `Следующая выплата через ${daysUntilPayment} ${daysUntilPayment === 1 ? 'день' : daysUntilPayment < 5 ? 'дня' : 'дней'}`}
+                                </span>
+                            </div>
+                        ` : '<div class="employees-item-payment-info"><span class="employees-item-next-payment payment-due">⚠️ Требуется выплата</span></div>'}
+                    </div>
+                    <div class="employees-item-actions">
+                        <select class="employees-item-move-select" onchange="moveEmployee('${employee.id}', this.value)">
+                            <option value="">Переместить в...</option>
+                            ${folders.map(folder => `<option value="${folder.id}" ${employee.folderId === folder.id ? 'selected' : ''}>${folder.name}</option>`).join('')}
+                            <option value="remove">Убрать должность</option>
+                        </select>
+                        <button class="employees-item-pay-btn" onclick="openPaySalaryModal('${employee.id}')" title="Выплатить зарплату">
+                            💰
+                        </button>
+                        <button class="employees-item-edit-btn" onclick="openEditEmployeeModal('${employee.id}')" title="Редактировать">
+                            ✏️
+                        </button>
+                        <button class="employees-item-delete-btn" onclick="deleteEmployee('${employee.id}')" title="Удалить">
+                            ❌
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Создание элемента сотрудника (для сотрудников без папки)
+        function createEmployeeElement(employee) {
+            const employeeDiv = document.createElement('div');
+            employeeDiv.className = 'employees-item';
+            employeeDiv.dataset.employeeId = employee.id;
+            employeeDiv.innerHTML = createEmployeeHTML(employee);
+            return employeeDiv;
+        }
+
+        // Переключение должности (разворачивание/сворачивание)
+        function toggleFolder(folderId) {
+            const content = document.getElementById(`folderContent-${folderId}`);
+            const folderElement = document.querySelector(`[data-folder-id="${folderId}"]`);
+            const toggle = folderElement.querySelector('.employees-folder-toggle');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▼';
+            }
+        }
+
+        // Перемещение сотрудника в должность
+        function moveEmployee(employeeId, folderId) {
+            const employee = employees.find(e => e.id.toString() === employeeId);
+            if (employee) {
+                if (folderId === 'remove') {
+                    employee.folderId = null;
+                } else if (folderId) {
+                    employee.folderId = folderId;
+                }
+                saveData();
+                renderEmployees();
+            }
+        }
+
+        // Открытие модального окна создания должности
+        function openFolderModal() {
+            document.getElementById('folderModal').style.display = 'flex';
+        }
+
+        // Закрытие модального окна создания должности
+        function closeFolderModal() {
+            document.getElementById('folderModal').style.display = 'none';
+            document.getElementById('folderForm').reset();
+        }
+
+        // Открытие модального окна редактирования
+        function openEditEmployeeModal(employeeId) {
+            editingEmployeeId = employeeId;
+            const employee = employees.find(e => e.id.toString() === employeeId);
+            if (employee) {
+                document.getElementById('editEmployeeFIO').value = employee.fio;
+                document.getElementById('editEmployeePhone').value = employee.phone;
+                document.getElementById('editEmployeeEmail').value = employee.email;
+                document.getElementById('editEmployeeSalary').value = employee.salary;
+                document.getElementById('editEmployeeFolder').value = employee.folderId || '';
+                document.getElementById('editEmployeeModal').style.display = 'flex';
+            }
+        }
+
+        // Закрытие модального окна редактирования
+        function closeEditEmployeeModal() {
+            document.getElementById('editEmployeeModal').style.display = 'none';
+            editingEmployeeId = null;
+            document.getElementById('editEmployeeForm').reset();
+        }
+
+        // Открытие модального окна выплаты зарплаты
+        function openPaySalaryModal(employeeId) {
+            payingEmployeeId = employeeId;
+            const employee = employees.find(e => e.id.toString() === employeeId);
+            if (employee) {
+                document.getElementById('payEmployeeName').textContent = employee.fio;
+                document.getElementById('payAmount').textContent = formatNumber(employee.salary);
+                document.getElementById('paySalaryModal').style.display = 'flex';
+            }
+        }
+
+        // Закрытие модального окна выплаты зарплаты
+        function closePaySalaryModal() {
+            document.getElementById('paySalaryModal').style.display = 'none';
+            payingEmployeeId = null;
+        }
+
+        // Показ модального окна подтверждения
+        function showConfirmModal(message, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            const messageEl = document.getElementById('confirmMessage');
+            messageEl.textContent = message;
+            modal.style.display = 'flex';
+            
+            document.getElementById('confirmYes').onclick = function() {
+                modal.style.display = 'none';
+                onConfirm();
+            };
+            
+            document.getElementById('confirmNo').onclick = function() {
+                modal.style.display = 'none';
+            };
+        }
+
+        // Подтверждение выплаты зарплаты
+        function confirmPaySalary() {
+            if (!payingEmployeeId) return;
+
+            const employee = employees.find(e => e.id.toString() === payingEmployeeId);
+            if (!employee) return;
+
+            const currentAccount = getCurrentAccount();
+            const balance = getAccountBalance(currentAccount);
+
+            if (balance < employee.salary) {
+                showWarning('Недостаточно средств на счете для выплаты зарплаты');
+                return;
+            }
+
+            const message = `Вы уверены, что хотите выплатить зарплату ${employee.fio} в размере ${formatNumber(employee.salary)} ₽?`;
+            
+            showConfirmModal(message, function() {
+                // Списываем с баланса
+                const newBalance = balance - employee.salary;
+                setAccountBalance(currentAccount, newBalance);
+
+                // Обновляем дату последней выплаты
+                employee.lastPaymentDate = new Date().toISOString();
+
+                // Добавляем запись в чеки текущего пользователя
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const email = currentUser.email || '';
+                if (email) {
+                    const key = `receipts_${email}`;
+                    const receipts = JSON.parse(localStorage.getItem(key) || '[]');
+                    receipts.push({
+                        id: Date.now().toString(),
+                        type: 'salary',
+                        description: `Выплата зарплаты: ${employee.fio}`,
+                        amount: employee.salary,
+                        date: new Date().toISOString(),
+                        account: currentAccount,
+                        pinned: false
+                    });
+                    localStorage.setItem(key, JSON.stringify(receipts));
+                }
+
+                saveData();
+                renderEmployees();
+                checkSalaryNotifications();
+
+                // Обновляем баланс в родительском окне, если оно открыто
+                if (window.opener && typeof window.opener.updateBalances === 'function') {
+                    window.opener.updateBalances();
+                }
+
+                showSuccess(`Зарплата ${formatNumber(employee.salary)} ₽ успешно выплачена ${employee.fio}`);
+                closePaySalaryModal();
+            });
+        }
+
+        // Удаление сотрудника
+        function deleteEmployee(employeeId) {
+            showConfirmModal('Вы уверены, что хотите удалить этого сотрудника?', function() {
+                employees = employees.filter(e => e.id.toString() !== employeeId);
+                saveData();
+                renderEmployees();
+                checkSalaryNotifications();
+            });
+        }
+
+        // Удаление должности
+        function deleteFolder(folderId) {
+            const folder = folders.find(f => f.id.toString() === folderId);
+            if (!folder) return;
+
+            const folderEmployees = employees.filter(e => e.folderId && e.folderId.toString() === folderId);
+            let message = `Вы уверены, что хотите удалить должность "${folder.name}"?`;
+            if (folderEmployees.length > 0) {
+                message += `\n\nВ должности находится ${folderEmployees.length} ${folderEmployees.length === 1 ? 'сотрудник' : 'сотрудников'}. Они будут перемещены в "Без должности".`;
+            }
+
+            showConfirmModal(message, function() {
+                employees.forEach(employee => {
+                    if (employee.folderId && employee.folderId.toString() === folderId) {
+                        employee.folderId = null;
+                    }
+                });
+                folders = folders.filter(f => f.id.toString() !== folderId);
+                saveData();
+                updateFolderSelects();
+                renderEmployees();
+            });
+        }
+
+        // Проверка уведомлений о зарплате
+        function checkSalaryNotifications() {
+            const now = new Date();
+            let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            
+            // Удаляем старые уведомления о зарплате
+            notifications = notifications.filter(n => n.type !== 'salary');
+
+            employees.forEach(employee => {
+                const lastPaymentDate = employee.lastPaymentDate ? new Date(employee.lastPaymentDate) : null;
+                const nextPaymentDate = lastPaymentDate ? new Date(lastPaymentDate.getTime() + 30 * 24 * 60 * 60 * 1000) : new Date(Date.now());
+                const daysUntilPayment = Math.ceil((nextPaymentDate - now) / (1000 * 60 * 60 * 24));
+
+                // Уведомление за 3 дня до выплаты или если просрочено
+                if (daysUntilPayment <= 3) {
+                    notifications.push({
+                        id: 'salary-' + employee.id + '-' + Date.now(),
+                        type: 'salary',
+                        title: 'Выплата зарплаты',
+                        message: `${employee.fio} - требуется выплата зарплаты ${formatNumber(employee.salary)} ₽${daysUntilPayment <= 0 ? ' (просрочено)' : ` (через ${daysUntilPayment} ${daysUntilPayment === 1 ? 'день' : 'дня'})`}`,
+                        date: new Date().toLocaleString('ru-RU'),
+                        read: false,
+                        employeeId: employee.id
+                    });
+                }
+            });
+
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+
+            // Обновляем уведомления в родительском окне, если оно открыто
+            if (window.opener && typeof window.opener.loadNotifications === 'function') {
+                window.opener.loadNotifications();
+            }
+        }
+
+        // Обработка формы добавления
+        document.getElementById('addEmployeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fio = document.getElementById('employeeFIO').value.trim();
+            const phone = document.getElementById('employeePhone').value.trim();
+            const email = document.getElementById('employeeEmail').value.trim();
+            const salary = parseFloat(document.getElementById('employeeSalary').value);
+            const folderId = document.getElementById('employeeFolder').value || null;
+
+            if (fio && phone && email && salary >= 0) {
+                employees.push({
+                    id: Date.now() + Math.random(),
+                    fio: fio,
+                    phone: phone,
+                    email: email,
+                    salary: salary,
+                    folderId: folderId,
+                    lastPaymentDate: null
+                });
+                saveData();
+                renderEmployees();
+                checkSalaryNotifications();
+                this.reset();
+            }
+        });
+
+        // Обработка формы создания должности
+        document.getElementById('folderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('folderName').value.trim();
+            if (name) {
+                folders.push({
+                    id: Date.now() + Math.random(),
+                    name: name
+                });
+                saveData();
+                updateFolderSelects();
+                renderEmployees();
+                closeFolderModal();
+            }
+        });
+
+        // Обработка формы редактирования
+        document.getElementById('editEmployeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (editingEmployeeId) {
+                const employee = employees.find(e => e.id.toString() === editingEmployeeId);
+                if (employee) {
+                    employee.fio = document.getElementById('editEmployeeFIO').value.trim();
+                    employee.phone = document.getElementById('editEmployeePhone').value.trim();
+                    employee.email = document.getElementById('editEmployeeEmail').value.trim();
+                    employee.salary = parseFloat(document.getElementById('editEmployeeSalary').value);
+                    const folderId = document.getElementById('editEmployeeFolder').value;
+                    employee.folderId = folderId || null;
+                    saveData();
+                    renderEmployees();
+                    checkSalaryNotifications();
+                    closeEditEmployeeModal();
+                }
+            }
+        });
+
+        // Инициализация
+        loadData();
+        // Проверяем уведомления каждые 6 часов
+        setInterval(checkSalaryNotifications, 6 * 60 * 60 * 1000);
+    </script>
+
+    <!-- Confirmation Modal -->
+    <div class="confirm-modal" id="confirmModal" style="display: none;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Подтверждение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="confirmMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" id="confirmNo">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" id="confirmYes">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Применение темы при загрузке страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+</body>
+</html>
+

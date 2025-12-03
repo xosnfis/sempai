@@ -1,0 +1,206 @@
+/**
+ * Стили для графиков и диаграмм
+ * Альфа-Ассистент
+ */
+
+/* Контейнер для графиков */
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin: 20px 0;
+    padding: 20px;
+    background: transparent;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 300px;
+    display: block;
+}
+
+/* Кнопка экспорта графика */
+.chart-export-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-export-btn:hover {
+    background: #ff3333;
+    color: #ffffff;
+    border-color: #ff3333;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(255, 51, 51, 0.3);
+}
+
+.chart-export-btn:active {
+    transform: scale(0.95);
+}
+
+/* Темная тема для контейнеров */
+.dark-theme .chart-container {
+    background: rgba(54, 54, 54, 0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .chart-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .chart-export-btn {
+    background: rgba(54, 54, 54, 0.9);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.dark-theme .chart-export-btn:hover {
+    background: #ff3333;
+    color: #ffffff;
+    border-color: #ff3333;
+}
+
+/* Анимация появления графика */
+.chart-container {
+    animation: fadeInChart 0.5s ease-in-out;
+}
+
+@keyframes fadeInChart {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .chart-container {
+        padding: 15px;
+        margin: 15px 0;
+    }
+
+    .chart-container canvas {
+        min-height: 250px;
+    }
+
+    .chart-export-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+        top: 8px;
+        right: 8px;
+    }
+}
+
+/* Интеграция с сообщениями чата */
+.chat-message-text .chart-container {
+    margin: 15px 0;
+    max-width: 100%;
+}
+
+.chat-message-text .chart-container canvas {
+    width: 100% !important;
+}
+
+/* Стили для легенды графиков */
+.chart-container .chartjs-legend {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme .chart-container .chartjs-legend {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Загрузка графика */
+.chart-container.loading {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(248, 248, 248, 0.5);
+}
+
+.dark-theme .chart-container.loading {
+    background: rgba(54, 54, 54, 0.5);
+}
+
+.chart-container.loading::before {
+    content: 'Загрузка графика...';
+    color: #666;
+    font-family: 'Inter', 'Manrope', sans-serif;
+    font-size: 14px;
+}
+
+.dark-theme .chart-container.loading::before {
+    color: #999;
+}
+
+/* Ошибка загрузки графика */
+.chart-container.error {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 51, 51, 0.1);
+    border: 1px solid rgba(255, 51, 51, 0.3);
+    border-radius: 8px;
+    color: #ff3333;
+    font-family: 'Inter', 'Manrope', sans-serif;
+    font-size: 14px;
+    padding: 20px;
+    text-align: center;
+}
+
+.dark-theme .chart-container.error {
+    background: rgba(255, 51, 51, 0.2);
+    border-color: rgba(255, 51, 51, 0.5);
+    color: #ff6666;
+}
+
+/* Улучшенная читаемость tooltips */
+.chartjs-tooltip {
+    font-family: 'Inter', 'Manrope', sans-serif !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Стили для множественных графиков в одном сообщении */
+.chat-message-text .chart-container + .chart-container {
+    margin-top: 30px;
+}
+
+/* Интеграция с таблицами Markdown */
+.chart-container + table.markdown-table,
+table.markdown-table + .chart-container {
+    margin-top: 25px;
+}
+

@@ -1,0 +1,615 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обратная связь - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="cabinet-page">
+    <!-- Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                </h1>
+                <p class="cabinet-subtitle">Обратная связь</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <div class="feedback-container">
+                <div class="feedback-header">
+                    <a href="{% url 'cabinet' %}" class="feedback-back-link">← Назад в личный кабинет</a>
+                </div>
+
+                <!-- Phantom Messages from Users -->
+                <div class="feedback-phantom-section">
+                    <h2 class="feedback-section-title">Сообщения от пользователей</h2>
+                    <div class="feedback-phantom-list" id="phantomMessagesList">
+                        <!-- Фантомные сообщения будут добавлены через JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Messages List -->
+                <div class="feedback-messages-section">
+                    <h2 class="feedback-section-title">Все сообщения</h2>
+                    <div class="feedback-messages-list" id="messagesList">
+                        <!-- Сообщения будут добавлены через JavaScript -->
+                    </div>
+                    <div class="feedback-empty" id="messagesEmpty" style="display: none;">
+                        <p>Нет сообщений</p>
+                    </div>
+                </div>
+
+                <!-- New Message Form -->
+                <div class="feedback-new-message-section">
+                    <h2 class="feedback-section-title">Отправить сообщение</h2>
+                    <form class="feedback-form" id="newMessageForm" onsubmit="sendMessage(event)">
+                        <div class="feedback-form-group">
+                            <label class="feedback-label">Сообщение</label>
+                            <textarea class="feedback-textarea" id="messageText" placeholder="Введите ваше сообщение" required></textarea>
+                        </div>
+                        <div class="feedback-form-actions">
+                            <button type="submit" class="feedback-submit-btn">Отправить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Reply Modal -->
+    <div id="replyModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Ответить на сообщение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <div class="feedback-reply-form">
+                    <div class="feedback-form-group">
+                        <label class="feedback-label">Ответ от организации</label>
+                        <textarea class="feedback-textarea" id="replyText" placeholder="Введите ваш ответ" required></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeReplyModal()">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" onclick="sendReply()">Отправить ответ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Ошибка</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="errorMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-confirm" onclick="closeErrorModal()">ОК</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Успешно</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="successMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-confirm" onclick="closeSuccessModal()">ОК</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal for Delete -->
+    <div id="confirmModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Подтверждение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="confirmModalMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" onclick="confirmAction()">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentReplyMessageId = null;
+
+        // Получить сообщения обратной связи текущего пользователя
+        function getUserFeedbackMessages() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return [];
+            const key = `feedbackMessages_${email}`;
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        }
+        
+        // Сохранить сообщения обратной связи текущего пользователя
+        function saveUserFeedbackMessages(messagesArray) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return;
+            const key = `feedbackMessages_${email}`;
+            localStorage.setItem(key, JSON.stringify(messagesArray));
+        }
+
+        // Фантомные сообщения от пользователей
+        const phantomMessages = [
+            {
+                id: 'phantom-1',
+                userName: 'Иван Петров',
+                text: 'Здравствуйте! Хотел бы узнать о возможности получения кредита для малого бизнеса. Какие условия и процентная ставка?',
+                date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                id: 'phantom-2',
+                userName: 'Мария Сидорова',
+                text: 'Добрый день! Интересует вопрос по открытию расчетного счета. Какие документы необходимы и сколько времени занимает процесс?',
+                date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                id: 'phantom-3',
+                userName: 'Алексей Козлов',
+                text: 'Здравствуйте! У меня возникли проблемы с доступом к интернет-банку. Не могу войти в систему уже второй день. Помогите, пожалуйста!',
+                date: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                id: 'phantom-4',
+                userName: 'Елена Волкова',
+                text: 'Добрый вечер! Хотела бы узнать о возможности рефинансирования кредита. Какие условия действуют сейчас?',
+                date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                id: 'phantom-5',
+                userName: 'Дмитрий Новиков',
+                text: 'Здравствуйте! Интересует вопрос по дебетовой карте с кэшбэком. Какие категории покупок дают максимальный возврат?',
+                date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+            }
+        ];
+
+        // Загружаем сообщения при загрузке страницы
+        window.addEventListener('DOMContentLoaded', function() {
+            loadPhantomMessages();
+            loadMessages();
+        });
+
+        function loadPhantomMessages() {
+            const phantomList = document.getElementById('phantomMessagesList');
+            phantomList.innerHTML = '';
+            
+            // Получаем список сообщений текущего пользователя
+            const savedMessages = getUserFeedbackMessages();
+            
+            // Показываем только те фантомные сообщения, на которые еще не ответили
+            phantomMessages.forEach(phantom => {
+                const savedMessage = savedMessages.find(m => m.id === phantom.id);
+                // Показываем фантомное сообщение, если на него еще нет ответов
+                if (!savedMessage || !savedMessage.replies || savedMessage.replies.length === 0) {
+                    const phantomItem = createPhantomMessageElement(phantom);
+                    phantomList.appendChild(phantomItem);
+                }
+            });
+        }
+
+        function createPhantomMessageElement(phantom) {
+            const item = document.createElement('div');
+            item.className = 'feedback-phantom-item';
+            
+            item.innerHTML = `
+                <div class="feedback-phantom-header">
+                    <div class="feedback-phantom-user">${escapeHtml(phantom.userName)}</div>
+                    <div class="feedback-phantom-date">${formatDate(phantom.date)}</div>
+                </div>
+                <div class="feedback-phantom-content">
+                    <p>${escapeHtml(phantom.text)}</p>
+                </div>
+                <div class="feedback-phantom-action">
+                    <button class="feedback-phantom-reply-btn" onclick="event.stopPropagation(); handlePhantomClick('${phantom.id}')">Ответить</button>
+                </div>
+            `;
+            
+            // Добавляем обработчик клика на весь элемент
+            item.addEventListener('click', function(event) {
+                if (!event.target.classList.contains('feedback-phantom-reply-btn')) {
+                    handlePhantomClick(phantom.id);
+                }
+            });
+            
+            return item;
+        }
+
+        function handlePhantomClick(phantomId) {
+            const phantom = phantomMessages.find(p => p.id === phantomId);
+            if (phantom) {
+                openReplyModal(phantom.id, phantom);
+            }
+        }
+
+        function deleteReply(messageId, replyIndex) {
+            const messages = getUserFeedbackMessages();
+            const message = messages.find(m => m.id === messageId);
+            
+            if (!message || !message.replies || !message.replies[replyIndex]) {
+                showErrorModal('Ответ не найден');
+                return;
+            }
+            
+            // Показываем подтверждение
+            showConfirmModal('Вы уверены, что хотите удалить этот ответ?', function() {
+                // Удаляем ответ
+                message.replies.splice(replyIndex, 1);
+                
+                // Проверяем, является ли это фантомным сообщением и остались ли ответы
+                const isPhantom = messageId && messageId.startsWith('phantom-');
+                if (isPhantom && (!message.replies || message.replies.length === 0)) {
+                    // Если это фантомное сообщение и ответов больше нет, удаляем само сообщение
+                    const messageIndex = messages.findIndex(m => m.id === messageId);
+                    if (messageIndex !== -1) {
+                        messages.splice(messageIndex, 1);
+                    }
+                }
+                
+                saveUserFeedbackMessages(messages);
+                
+                // Обновляем список сообщений и фантомных сообщений
+                loadMessages();
+                loadPhantomMessages();
+                
+                showSuccessModal('Ответ удален');
+            });
+        }
+
+        function deleteMessage(messageId) {
+            const messages = getUserFeedbackMessages();
+            const message = messages.find(m => m.id === messageId);
+            
+            if (!message) {
+                showErrorModal('Сообщение не найдено');
+                return;
+            }
+            
+            // Показываем подтверждение
+            showConfirmModal('Вы уверены, что хотите удалить это сообщение?', function() {
+                // Удаляем сообщение
+                const messageIndex = messages.findIndex(m => m.id === messageId);
+                if (messageIndex !== -1) {
+                    messages.splice(messageIndex, 1);
+                    saveUserFeedbackMessages(messages);
+                }
+                
+                // Обновляем список сообщений
+                loadMessages();
+                
+                showSuccessModal('Сообщение удалено');
+            });
+        }
+
+        function showConfirmModal(message, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            const messageEl = document.getElementById('confirmModalMessage');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+                window.confirmCallback = onConfirm;
+            }
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            if (modal) {
+                modal.style.display = 'none';
+                window.confirmCallback = null;
+            }
+        }
+
+        function confirmAction() {
+            if (window.confirmCallback) {
+                window.confirmCallback();
+                closeConfirmModal();
+            }
+        }
+
+        function loadMessages() {
+            const messages = getUserFeedbackMessages();
+            const messagesList = document.getElementById('messagesList');
+            const messagesEmpty = document.getElementById('messagesEmpty');
+            
+            messagesList.innerHTML = '';
+            
+            // Фильтруем сообщения (показываем все, включая фантомные, если они были сохранены)
+            const allMessages = messages;
+            
+            if (allMessages.length === 0) {
+                messagesEmpty.style.display = 'block';
+                messagesList.style.display = 'none';
+            } else {
+                messagesEmpty.style.display = 'none';
+                messagesList.style.display = 'block';
+                
+                // Сортируем сообщения по дате (новые сверху)
+                allMessages.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                allMessages.forEach(message => {
+                    const messageItem = createMessageElement(message);
+                    messagesList.appendChild(messageItem);
+                });
+            }
+        }
+
+        function createMessageElement(message) {
+            const item = document.createElement('div');
+            item.className = 'feedback-message-item';
+            item.dataset.messageId = message.id;
+            
+            const hasReplies = message.replies && message.replies.length > 0;
+            const userName = message.userName || 'Пользователь';
+            
+            // Проверяем, является ли сообщение от организации (начинается с id 'msg-')
+            const isFromOrganization = message.id && message.id.startsWith('msg-');
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const organization = currentUser.organization || 'Организация';
+            const isOrganizationMessage = isFromOrganization && userName === organization;
+            
+            item.innerHTML = `
+                <div class="feedback-message-header">
+                    <div class="feedback-message-info">
+                        <div class="feedback-message-user">${escapeHtml(userName)}</div>
+                        <div class="feedback-message-meta">
+                            <span class="feedback-message-date">${formatDate(message.date)}</span>
+                            ${hasReplies ? `<span class="feedback-message-replies-count">Ответов: ${message.replies.length}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="feedback-message-actions">
+                        ${!isOrganizationMessage ? `<button class="feedback-message-reply-btn" onclick="openReplyModal('${message.id}')">Ответить</button>` : ''}
+                        ${isOrganizationMessage ? `<button class="feedback-message-delete-btn" onclick="deleteMessage('${message.id}')" title="Удалить сообщение">×</button>` : ''}
+                    </div>
+                </div>
+                <div class="feedback-message-content">
+                    <p>${escapeHtml(message.text)}</p>
+                </div>
+                ${hasReplies ? `
+                    <div class="feedback-message-replies">
+                        ${message.replies.map((reply, index) => `
+                            <div class="feedback-reply-item">
+                                <div class="feedback-reply-header">
+                                    <div class="feedback-reply-header-left">
+                                        <span class="feedback-reply-organization">${escapeHtml(reply.organization)}</span>
+                                        <span class="feedback-reply-date">${formatDate(reply.date)}</span>
+                                    </div>
+                                    <button class="feedback-reply-delete-btn" onclick="deleteReply('${message.id}', ${index})" title="Удалить ответ">×</button>
+                                </div>
+                                <div class="feedback-reply-content">
+                                    <p>${escapeHtml(reply.text)}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            `;
+            
+            return item;
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            
+            const text = document.getElementById('messageText').value.trim();
+            
+            if (!text) {
+                showErrorModal('Введите сообщение');
+                return;
+            }
+            
+            // Получаем наименование организации из профиля
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const organization = currentUser.organization || 'Организация';
+            
+            const messages = getUserFeedbackMessages();
+            const newMessage = {
+                id: 'msg-' + Date.now(),
+                userName: organization,
+                text: text,
+                date: new Date().toISOString(),
+                replies: []
+            };
+            
+            messages.push(newMessage);
+            saveUserFeedbackMessages(messages);
+            
+            // Очищаем форму
+            document.getElementById('newMessageForm').reset();
+            
+            // Обновляем список сообщений
+            loadMessages();
+            
+            showSuccessModal('Сообщение отправлено');
+        }
+
+        function openReplyModal(messageId, phantomMessage = null) {
+            currentReplyMessageId = messageId;
+            
+            // Если это фантомное сообщение, сохраняем его в localStorage
+            if (phantomMessage) {
+                const messages = getUserFeedbackMessages();
+                const existingMessage = messages.find(m => m.id === messageId);
+                
+                if (!existingMessage) {
+                    const newMessage = {
+                        id: phantomMessage.id,
+                        userName: phantomMessage.userName,
+                        text: phantomMessage.text,
+                        date: phantomMessage.date,
+                        replies: []
+                    };
+                    messages.push(newMessage);
+                    saveUserFeedbackMessages(messages);
+                    loadMessages();
+                }
+            }
+            
+            document.getElementById('replyModal').style.display = 'flex';
+            document.getElementById('replyText').value = '';
+        }
+
+        function closeReplyModal() {
+            document.getElementById('replyModal').style.display = 'none';
+            currentReplyMessageId = null;
+        }
+
+        function sendReply() {
+            const replyText = document.getElementById('replyText').value.trim();
+            
+            if (!replyText) {
+                showErrorModal('Введите ответ');
+                return;
+            }
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const organization = currentUser.organization || 'Организация';
+            
+            const messages = getUserFeedbackMessages();
+            const message = messages.find(m => m.id === currentReplyMessageId);
+            
+            if (!message) {
+                showErrorModal('Сообщение не найдено');
+                return;
+            }
+            
+            if (!message.replies) {
+                message.replies = [];
+            }
+            
+            const reply = {
+                organization: organization,
+                text: replyText,
+                date: new Date().toISOString()
+            };
+            
+            message.replies.push(reply);
+            saveUserFeedbackMessages(messages);
+            
+            // Закрываем модальное окно
+            closeReplyModal();
+            
+            // Обновляем список сообщений и фантомных сообщений
+            loadMessages();
+            loadPhantomMessages();
+            
+            showSuccessModal('Ответ отправлен');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('ru-RU', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showErrorModal(message) {
+            const modal = document.getElementById('errorModal');
+            const messageEl = document.getElementById('errorMessage');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function showSuccessModal(message) {
+            const modal = document.getElementById('successModal');
+            const messageEl = document.getElementById('successMessage');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Закрытие модальных окон при клике вне их
+        window.addEventListener('click', function(event) {
+            const replyModal = document.getElementById('replyModal');
+            const errorModal = document.getElementById('errorModal');
+            const successModal = document.getElementById('successModal');
+            const confirmModal = document.getElementById('confirmModal');
+            
+            if (event.target === replyModal) {
+                closeReplyModal();
+            }
+            if (event.target === errorModal) {
+                closeErrorModal();
+            }
+            if (event.target === successModal) {
+                closeSuccessModal();
+            }
+            if (event.target === confirmModal) {
+                closeConfirmModal();
+            }
+        });
+    </script>
+    
+    <script>
+        // Применение темы при загрузке страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+</body>
+</html>
+

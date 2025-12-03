@@ -1,4 +1,4 @@
-# Альфа-Ассистент (Alfa Finansi)
+# Альфа-Ассистент
 
 ИИ-помощник для бизнеса на базе Django и Ollama. Веб-приложение предоставляет интеллектуального ассистента, который помогает управлять бизнесом, анализировать данные и выполнять различные задачи.
 
@@ -64,7 +64,7 @@ AI может:
 - API endpoints (`/api/metrics/`, `/api/metrics/summary/`)
 - Автоматический расчет при обработке запросов
 
-Подробнее см. [METRICS_SETUP.md](METRICS_SETUP.md)
+Подробнее см. [sempaialfa-main/METRICS_SETUP.md](sempaialfa-main/METRICS_SETUP.md)
 
 ### Админ-панель
 
@@ -127,6 +127,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ```powershell
 # Из корня проекта sempaialfa-main
+cd sempaialfa-main
 pip install -r requirements.txt
 ```
 
@@ -170,7 +171,7 @@ python manage.py runserver
 
 ### 1. Проверка подключения
 
-URL для Ollama настроен в `aichat/aichat/settings.py`:
+URL для Ollama настроен в `sempaialfa-main/aichat/aichat/settings.py`:
 
 ```python
 OLLAMA_URL = 'http://host.docker.internal:9117/v1/chat/completions'
@@ -210,9 +211,10 @@ OLLAMA_URL = 'http://localhost:ВАШ_ПОРТ/v1/chat/completions'
 
 ### 1. Настройка переменных окружения (опционально)
 
-Создайте файл `.env` в корне проекта (можно скопировать из `env.example`):
+Создайте файл `.env` в корне проекта `sempaialfa-main` (можно скопировать из `env.example`):
 
 ```bash
+cd sempaialfa-main
 cp env.example .env
 ```
 
@@ -279,7 +281,7 @@ docker-compose exec web python manage.py dbshell
 docker-compose exec db psql -U alfa_user -d alfa_db
 ```
 
-**Подробная документация:** см. `DOCKER_DATABASE.md`
+**Подробная документация:** см. [sempaialfa-main/DOCKER_DATABASE.md](sempaialfa-main/DOCKER_DATABASE.md)
 
 ## Авторизация и вход
 
@@ -335,6 +337,12 @@ docker-compose exec db psql -U alfa_user -d alfa_db
      -d '{"days": 7}'
    ```
 
+3. **Через PowerShell скрипт**:
+   ```powershell
+   cd sempaialfa-main
+   .\get-metrics.ps1 -Action summary -Days 7
+   ```
+
 ### Категории метрик
 
 - **Качество** - точность, релевантность, полнота ответов
@@ -344,7 +352,7 @@ docker-compose exec db psql -U alfa_user -d alfa_db
 - **Пользовательский опыт** - удовлетворенность, вовлеченность
 - **Активность пользователей** - активность, удержание
 
-Подробнее см. [METRICS_SETUP.md](METRICS_SETUP.md)
+Подробнее см. [sempaialfa-main/METRICS_SETUP.md](sempaialfa-main/METRICS_SETUP.md)
 
 ## Примеры использования AI-помощника
 
@@ -361,7 +369,7 @@ docker-compose exec db psql -U alfa_user -d alfa_db
 ## Структура проекта
 
 ```
-alfa-finansi/
+alfa/
 ├── sempaialfa-main/
 │   ├── aichat/                    # Основное Django приложение
 │   │   ├── aichat/                # Настройки проекта
@@ -388,11 +396,19 @@ alfa-finansi/
 │   ├── Dockerfile                 # Конфигурация Docker образа
 │   ├── docker-compose.yml         # Конфигурация Docker Compose
 │   ├── requirements.txt           # Python зависимости
-│   ├── README.md                  # Документация
+│   ├── get-metrics.ps1            # PowerShell скрипт для работы с метриками
+│   ├── README.md                  # Документация проекта
 │   ├── METRICS_SETUP.md           # Настройка метрик
 │   ├── ADMIN_PANEL.md             # Документация админ-панели
-│   └── DOCKER_DATABASE.md         # Настройка базы данных
-└── README.md                       # Документация корневого уровня
+│   ├── ADMIN_QUICKSTART.md        # Быстрый старт для админ-панели
+│   ├── DOCKER_DATABASE.md         # Настройка базы данных
+│   ├── TESTING.md                 # Инструкции по тестированию
+│   ├── OPENAPI.md                 # OpenAPI спецификация
+│   ├── OPENAPI_QUICKSTART.md      # Быстрый старт OpenAPI
+│   ├── POWERSHELL_API.md          # Документация PowerShell API
+│   ├── VALUE_DEMO_PROMPT.md       # Демосценарии
+│   └── CHANGELOG.md               # История изменений
+└── README.md                       # Документация корневого уровня (этот файл)
 ```
 
 ## API Endpoints
@@ -467,11 +483,11 @@ alfa-finansi/
 - Интеграционные тесты
 - Тесты безопасности и производительности
 
-Подробные инструкции по запуску тестов см. в файле [TESTING.md](TESTING.md).
+Подробные инструкции по запуску тестов см. в файле [sempaialfa-main/TESTING.md](sempaialfa-main/TESTING.md).
 
 ## Настройка модели AI
 
-В файле `aichat/main/views.py` можно изменить параметры модели:
+В файле `sempaialfa-main/aichat/main/views.py` можно изменить параметры модели:
 
 - `temperature`: 0.7 (креативность ответов, от 0 до 1)
 - `max_tokens`: 1000 (максимальная длина ответа)
@@ -479,7 +495,7 @@ alfa-finansi/
 
 ## Переменные окружения
 
-Для production рекомендуется использовать переменные окружения. Создайте файл `.env`:
+Для production рекомендуется использовать переменные окружения. Создайте файл `.env` в `sempaialfa-main/`:
 
 ```env
 SECRET_KEY=your-secret-key-here
@@ -520,7 +536,7 @@ DB_PORT=5432
 
 ### Проблемы с миграциями
 
-```bash
+```powershell
 # Удалить базу данных и применить миграции заново
 cd sempaialfa-main\aichat
 Remove-Item db.sqlite3 -ErrorAction SilentlyContinue
@@ -529,7 +545,8 @@ python manage.py migrate
 
 ### Проблемы со статическими файлами
 
-```bash
+```powershell
+cd sempaialfa-main\aichat
 python manage.py collectstatic --noinput
 ```
 
@@ -540,6 +557,7 @@ python manage.py collectstatic --noinput
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 # Активировать виртуальное окружение
+cd sempaialfa-main\aichat
 .\venv\Scripts\Activate.ps1
 ```
 
@@ -555,6 +573,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 - Убедитесь, что миграции применены: `python manage.py migrate`
 - Проверьте, что есть запросы к AI (метрики рассчитываются автоматически)
 - Используйте API для принудительного расчета: `POST /api/metrics/calculate/`
+- Используйте PowerShell скрипт: `.\sempaialfa-main\get-metrics.ps1 -Action calculate -Days 7`
 - Проверьте логи Django на наличие ошибок
 
 ## Разработка
@@ -580,11 +599,11 @@ python manage.py runserver
 
 ### Изменение системного промпта
 
-Системный промпт настраивается в функции `process_chat_request_async` в `aichat/main/views.py`. Вы можете изменить этот промпт для изменения поведения AI.
+Системный промпт настраивается в функции `process_chat_request_async` в `sempaialfa-main/aichat/main/views.py`. Вы можете изменить этот промпт для изменения поведения AI.
 
 ### Кастомизация админ-панели
 
-Стили админ-панели находятся в `static/admin/css/custom_admin.css`. Можно изменить:
+Стили админ-панели находятся в `sempaialfa-main/aichat/static/admin/css/custom_admin.css`. Можно изменить:
 - Цвета акцентов
 - Размеры и отступы
 - Шрифты
@@ -623,13 +642,13 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8000", "aichat.wsgi:application"]
 
 ## Дополнительная документация
 
-- [METRICS_SETUP.md](METRICS_SETUP.md) - Подробная инструкция по настройке системы метрик
-- [ADMIN_PANEL.md](ADMIN_PANEL.md) - Документация по админ-панели
-- [ADMIN_QUICKSTART.md](ADMIN_QUICKSTART.md) - Быстрый старт для админ-панели
-- [DOCKER_DATABASE.md](DOCKER_DATABASE.md) - Настройка базы данных в Docker
-- [TESTING.md](TESTING.md) - Инструкции по тестированию
-- [OPENAPI.md](OPENAPI.md) - OpenAPI спецификация и документация API
-- [VALUE_DEMO_PROMPT.md](VALUE_DEMO_PROMPT.md) - Демосценарии для презентации продукта
+- [sempaialfa-main/METRICS_SETUP.md](sempaialfa-main/METRICS_SETUP.md) - Подробная инструкция по настройке системы метрик
+- [sempaialfa-main/ADMIN_PANEL.md](sempaialfa-main/ADMIN_PANEL.md) - Документация по админ-панели
+- [sempaialfa-main/ADMIN_QUICKSTART.md](sempaialfa-main/ADMIN_QUICKSTART.md) - Быстрый старт для админ-панели
+- [sempaialfa-main/DOCKER_DATABASE.md](sempaialfa-main/DOCKER_DATABASE.md) - Настройка базы данных в Docker
+- [sempaialfa-main/TESTING.md](sempaialfa-main/TESTING.md) - Инструкции по тестированию
+- [sempaialfa-main/OPENAPI.md](sempaialfa-main/OPENAPI.md) - OpenAPI спецификация и документация API
+- [sempaialfa-main/VALUE_DEMO_PROMPT.md](sempaialfa-main/VALUE_DEMO_PROMPT.md) - Демосценарии для презентации продукта
 
 ## Авторы/роли
 

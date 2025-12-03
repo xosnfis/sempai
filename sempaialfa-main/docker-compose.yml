@@ -1,0 +1,65 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: alfa-ai-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME:-alfa_db}
+      POSTGRES_USER: ${DB_USER:-alfa_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-alfa_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-alfa_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: alfa-ai-web
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      # Монтируем код для разработки (можно закомментировать для production)
+      - ./aichat:/app/aichat
+      # Монтируем медиа файлы
+      - ./aichat/media:/app/aichat/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=aichat.settings
+      - PYTHONUNBUFFERED=1
+      # Переменные для подключения к БД (можно переопределить через .env)
+      - DB_ENGINE=${DB_ENGINE:-django.db.backends.postgresql}
+      - DB_NAME=${DB_NAME:-alfa_db}
+      - DB_USER=${DB_USER:-alfa_user}
+      - DB_PASSWORD=${DB_PASSWORD:-alfa_password}
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        echo "Ожидание подключения к базе данных..."
+        sleep 2
+        python manage.py migrate --noinput
+        echo ""
+        echo "========================================"
+        echo "🚀 Сервер Django запущен!"
+        echo "📱 Откройте в браузере: http://localhost:8000"
+        echo "🗄️  База данных: PostgreSQL"
+        echo "========================================"
+        echo ""
+        python manage.py runserver 0.0.0.0:8000
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -1,0 +1,386 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Lazy Loading для изображений -->
+    <script src="{% static 'js/lazy-loading.js' %}?v={{ cache_version }}"></script>
+    <!-- Система модальных окон -->
+    <script src="{% static 'js/modal.js' %}?v={{ cache_version }}"></script>
+</head>
+<body class="login-page">
+    <!-- Theme Toggle Button -->
+    <button class="login-theme-toggle" id="loginThemeToggle" onclick="toggleLoginTheme()" title="Переключить тему" 
+            data-light-icon="{% static 'images/sv_tema.svg' %}" 
+            data-dark-icon="{% static 'images/tem_tema.svg' %}">
+        <img src="{% static 'images/sv_tema.svg' %}" alt="Переключить тему" class="login-theme-icon" id="loginThemeIcon">
+    </button>
+    
+    <div class="login-container">
+        <!-- Fixed Tabs at Top -->
+        <div class="login-tabs-fixed">
+            <button class="login-tab-fixed active" id="loginTabFixed" onclick="flipToLogin()">Вход</button>
+            <button class="login-tab-fixed" id="registerTabFixed" onclick="flipToRegister()">Регистрация</button>
+        </div>
+        
+        <div class="login-card-wrapper" id="loginCardWrapper">
+            <div class="login-card-inner">
+                <!-- Front Side - Login Form -->
+                <div class="login-card-face login-card-front">
+                    <div class="login-form-container">
+                        <h2 class="login-title">Вход</h2>
+                        <form class="login-form" id="loginFormElement" onsubmit="handleLogin(event)">
+                            <div class="login-form-group">
+                                <input type="email" class="login-input" id="loginEmail" placeholder="Электронная почта" required>
+                            </div>
+                            <div class="login-form-group">
+                                <input type="password" class="login-input" id="loginPassword" placeholder="Пароль" required>
+                            </div>
+                            <div class="login-checkbox-container">
+                                <input type="checkbox" id="loginRobot" class="login-checkbox" required>
+                                <label for="loginRobot" class="login-checkbox-label">Я точно не робот</label>
+                            </div>
+                            <div class="login-security-message">
+                                <span class="login-security-icon">🛡️</span>
+                                <span class="login-security-text">Мы гарантируем безопасность и сохранность ваших данных</span>
+                            </div>
+                            <button type="submit" class="login-submit-btn">Войти</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Back Side - Register Form -->
+                <div class="login-card-face login-card-back">
+                    <div class="login-form-container">
+                        <h2 class="login-title">Регистрация</h2>
+                        <form class="login-form" id="registerFormElement" onsubmit="handleRegister(event)">
+                            <div class="login-form-group">
+                                <input type="text" class="login-input" id="registerOrganization" placeholder="Наименование организации" required>
+                            </div>
+                            <div class="login-form-group">
+                                <input type="email" class="login-input" id="registerEmail" placeholder="Электронная почта" required>
+                            </div>
+                            <div class="login-form-group">
+                                <input type="password" class="login-input" id="registerPassword" placeholder="Пароль" required>
+                            </div>
+                            <div class="login-form-group">
+                                <input type="password" class="login-input" id="registerConfirmPassword" placeholder="Подтвердите пароль" required>
+                            </div>
+                            <div class="login-checkbox-container">
+                                <input type="checkbox" id="registerRobot" class="login-checkbox" required>
+                                <label for="registerRobot" class="login-checkbox-label">Я точно не робот</label>
+                            </div>
+                            <div class="login-security-message">
+                                <span class="login-security-icon">🛡️</span>
+                                <span class="login-security-text">Мы гарантируем безопасность и сохранность ваших данных</span>
+                            </div>
+                            <button type="submit" class="login-submit-btn">Зарегистрироваться</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Flip card to register form
+        function flipToRegister() {
+            const cardWrapper = document.getElementById('loginCardWrapper');
+            const loginTab = document.getElementById('loginTabFixed');
+            const registerTab = document.getElementById('registerTabFixed');
+            cardWrapper.classList.add('flipped');
+            loginTab.classList.remove('active');
+            registerTab.classList.add('active');
+        }
+
+        // Flip card to login form
+        function flipToLogin() {
+            const cardWrapper = document.getElementById('loginCardWrapper');
+            const loginTab = document.getElementById('loginTabFixed');
+            const registerTab = document.getElementById('registerTabFixed');
+            cardWrapper.classList.remove('flipped');
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+        }
+
+        // Handle login
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+            const robotCheck = document.getElementById('loginRobot').checked;
+
+            if (!robotCheck) {
+                showWarning('Пожалуйста, подтвердите, что вы не робот');
+                return;
+            }
+
+            // Отключаем кнопку входа во время обработки
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Вход...';
+
+            try {
+                // Пытаемся авторизоваться через Django API
+                const response = await fetch("{% url 'login_api' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    }),
+                    credentials: 'same-origin' // Важно для сохранения Django сессии
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Если пользователь админ - перенаправляем в админ-панель
+                    if (data.is_admin) {
+                        window.location.href = '/admin/';
+                    } else {
+                        // Обычный пользователь - проверяем localStorage для обратной совместимости
+                        const users = JSON.parse(localStorage.getItem('users') || '[]');
+                        const user = users.find(u => u.email === email);
+                        
+                        if (user) {
+                            localStorage.setItem('currentUser', JSON.stringify({
+                                organization: user.organization,
+                                email: user.email
+                            }));
+                        }
+                        
+                        // Перенаправляем в кабинет
+                        window.location.href = "{% url 'cabinet' %}";
+                    }
+                } else {
+                    // Если API вернул use_localstorage, используем старую логику
+                    if (data.use_localstorage) {
+                        const users = JSON.parse(localStorage.getItem('users') || '[]');
+                        const user = users.find(u => u.email === email && u.password === password);
+
+                        if (user) {
+                            localStorage.setItem('currentUser', JSON.stringify({
+                                organization: user.organization,
+                                email: user.email
+                            }));
+                            window.location.href = "{% url 'cabinet' %}";
+                        } else {
+                            showError('Неверный email или пароль');
+                            submitButton.disabled = false;
+                            submitButton.textContent = originalButtonText;
+                        }
+                    } else {
+                        showError(data.error || 'Ошибка при входе');
+                        submitButton.disabled = false;
+                        submitButton.textContent = originalButtonText;
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при входе:', error);
+                // Fallback на localStorage для обратной совместимости
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const user = users.find(u => u.email === email && u.password === password);
+
+                if (user) {
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        organization: user.organization,
+                        email: user.email
+                    }));
+                    window.location.href = "{% url 'cabinet' %}";
+                } else {
+                    showError('Ошибка подключения к серверу. Проверьте интернет-соединение.');
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                }
+            }
+        }
+
+        // Handle registration
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const organization = document.getElementById('registerOrganization').value.trim();
+            const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            const robotCheck = document.getElementById('registerRobot').checked;
+
+            if (!robotCheck) {
+                showWarning('Пожалуйста, подтвердите, что вы не робот');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showWarning('Пароли не совпадают');
+                return;
+            }
+
+            if (password.length < 6) {
+                showWarning('Пароль должен содержать минимум 6 символов');
+                return;
+            }
+
+            // Отключаем кнопку регистрации во время обработки
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Регистрация...';
+
+            try {
+                // Вызываем API для регистрации в БД
+                const response = await fetch("{% url 'register_user' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        organization: organization,
+                        email: email,
+                        password: password,
+                        confirmPassword: confirmPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Сохраняем пользователя в localStorage для совместимости с существующим кодом
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    
+                    // Проверяем, нет ли уже такого пользователя в localStorage
+                    if (!users.find(u => u.email === email)) {
+                        users.push({
+                            organization: organization,
+                            email: email,
+                            password: password
+                        });
+                        localStorage.setItem('users', JSON.stringify(users));
+                    }
+
+                    // Сохраняем текущего пользователя
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        organization: organization,
+                        email: email
+                    }));
+
+                    // Инициализируем данные для нового пользователя
+                    initializeNewUserData();
+
+                    // Показываем успешное сообщение
+                    await showSuccess('Регистрация успешно завершена!');
+
+                    // Перенаправляем в кабинет
+                    window.location.href = "{% url 'cabinet' %}";
+                } else {
+                    // Показываем ошибку от сервера
+                    showError(data.error || 'Ошибка при регистрации');
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                }
+            } catch (error) {
+                console.error('Ошибка при регистрации:', error);
+                showError('Ошибка подключения к серверу. Проверьте интернет-соединение.');
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+            }
+        }
+
+        // Initialize data for new user
+        function initializeNewUserData() {
+            // Set account balances: first account 300,000, second account 50,000
+            localStorage.setItem('accountBalance', '300000');
+            localStorage.setItem('accountBalance2', '50000');
+            localStorage.setItem('currentAccount', '1');
+
+            // Initialize taxes data
+            const taxes = [
+                { id: 'profit', basePrice: 50000 },
+                { id: 'vat', basePrice: 35000 },
+                { id: 'property', basePrice: 25000 },
+                { id: 'insurance', basePrice: 40000 }
+            ];
+            const taxesData = {};
+            taxes.forEach(tax => {
+                taxesData[tax.id] = {
+                    debt: tax.basePrice,
+                    lastUpdate: Date.now(),
+                    lastPayment: null
+                };
+            });
+            localStorage.setItem('taxesData', JSON.stringify(taxesData));
+
+            // Initialize utilities data
+            const utilities = [
+                { id: 'electricity', basePrice: 5000 },
+                { id: 'water', basePrice: 3000 },
+                { id: 'heating', basePrice: 8000 },
+                { id: 'waste', basePrice: 2000 },
+                { id: 'security', basePrice: 6000 },
+                { id: 'internet', basePrice: 1500 }
+            ];
+            const utilitiesData = {};
+            utilities.forEach(util => {
+                utilitiesData[util.id] = {
+                    debt: util.basePrice,
+                    lastUpdate: Date.now(),
+                    lastPayment: null
+                };
+            });
+            localStorage.setItem('utilitiesData', JSON.stringify(utilitiesData));
+        }
+
+        // Theme toggle functions
+        function toggleLoginTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            localStorage.setItem('theme', newTheme);
+            applyLoginTheme(newTheme);
+        }
+
+        function applyLoginTheme(theme) {
+            const themeIcon = document.getElementById('loginThemeIcon');
+            const themeToggle = document.getElementById('loginThemeToggle');
+            const lightIcon = themeToggle.getAttribute('data-light-icon');
+            const darkIcon = themeToggle.getAttribute('data-dark-icon');
+            
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+                themeIcon.src = darkIcon;
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.documentElement.classList.remove('dark-theme');
+                themeIcon.src = lightIcon;
+            }
+        }
+
+        // Check if user is already logged in and apply theme
+        window.addEventListener('DOMContentLoaded', function() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                window.location.href = "{% url 'cabinet' %}";
+            }
+            
+            // Apply saved theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyLoginTheme(savedTheme);
+        });
+    </script>
+</body>
+</html>
+

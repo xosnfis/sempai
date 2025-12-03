@@ -1,0 +1,403 @@
+{
+  "users": {
+    "regular_user": {
+      "email": "user@example.com",
+      "password": "password123",
+      "organization": "ООО Компания",
+      "username": "user"
+    },
+    "admin_user": {
+      "email": "admin@example.com",
+      "password": "admin123",
+      "organization": "Администратор",
+      "username": "admin"
+    },
+    "test_user": {
+      "email": "test@example.com",
+      "password": "test123",
+      "organization": "Тестовая компания",
+      "username": "test"
+    }
+  },
+  "chat_requests": {
+    "simple_message": {
+      "message": "Покажи баланс моих счетов",
+      "history": [],
+      "userData": {
+        "email": "user@example.com",
+        "organization": "ООО Компания"
+      },
+      "files": []
+    },
+    "message_with_history": {
+      "message": "А сколько задолженности по налогам?",
+      "history": [
+        {
+          "role": "user",
+          "content": "Покажи баланс моих счетов"
+        },
+        {
+          "role": "assistant",
+          "content": "Баланс счета 1: 500,000 ₽, баланс счета 2: 250,000 ₽"
+        }
+      ],
+      "userData": {
+        "email": "user@example.com",
+        "organization": "ООО Компания"
+      },
+      "files": []
+    },
+    "inventory_query": {
+      "message": "Сколько товаров в категории 'Электроника'?",
+      "history": [],
+      "userData": {
+        "email": "user@example.com",
+        "organization": "ООО Компания"
+      },
+      "files": []
+    },
+    "financial_analysis": {
+      "message": "Проанализируй расходы за последний месяц и покажи график",
+      "history": [],
+      "userData": {
+        "email": "user@example.com",
+        "organization": "ООО Компания"
+      },
+      "files": []
+    },
+    "calendar_request": {
+      "message": "Запланируй встречу с клиентом на завтра в 15:00",
+      "history": [],
+      "userData": {
+        "email": "user@example.com",
+        "organization": "ООО Компания"
+      },
+      "files": []
+    }
+  },
+  "calendar_events": {
+    "create_event": {
+      "title": "Встреча с клиентом",
+      "date": "2024-12-26T15:00:00",
+      "description": "Обсуждение проекта",
+      "email": "user@example.com"
+    },
+    "update_event": {
+      "action": "UPDATE_EVENT",
+      "event": "Встреча с клиентом",
+      "title": "Встреча с клиентом (обновлено)",
+      "date": "2024-12-27T16:00:00",
+      "description": "Обсуждение проекта и бюджета",
+      "email": "user@example.com"
+    },
+    "delete_event": {
+      "action": "DELETE_EVENT",
+      "event": "Встреча с клиентом",
+      "email": "user@example.com"
+    }
+  },
+  "user_data": {
+    "sample_user_data": {
+      "email": "user@example.com",
+      "organization": "ООО Компания",
+      "balance1": 500000,
+      "balance2": 250000,
+      "receipts": [
+        {
+          "date": "2024-12-20",
+          "amount": 15000,
+          "description": "Оплата поставщику"
+        },
+        {
+          "date": "2024-12-21",
+          "amount": 50000,
+          "description": "Поступление от клиента"
+        }
+      ],
+      "taxes": [
+        {
+          "name": "НДС",
+          "amount": 35000,
+          "status": "Не оплачено"
+        },
+        {
+          "name": "Налог на прибыль",
+          "amount": 50000,
+          "status": "Не оплачено"
+        }
+      ],
+      "utilities": [
+        {
+          "name": "Электричество",
+          "amount": 5000,
+          "status": "Не оплачено"
+        },
+        {
+          "name": "Вода",
+          "amount": 3000,
+          "status": "Не оплачено"
+        }
+      ],
+      "inventory": [
+        {
+          "folder": "Электроника",
+          "items": [
+            {
+              "name": "Ноутбук",
+              "quantity": 10,
+              "price": 50000
+            },
+            {
+              "name": "Монитор",
+              "quantity": 5,
+              "price": 15000
+            }
+          ]
+        },
+        {
+          "folder": "Канцелярия",
+          "items": [
+            {
+              "name": "Карандаш",
+              "quantity": 100,
+              "price": 50
+            }
+          ]
+        }
+      ],
+      "employees": [
+        {
+          "name": "Иванов И.И.",
+          "position": "Директор",
+          "salary": 100000
+        },
+        {
+          "name": "Петров П.П.",
+          "position": "Менеджер",
+          "salary": 60000
+        },
+        {
+          "name": "Сидоров С.С.",
+          "position": "Бухгалтер",
+          "salary": 50000
+        }
+      ],
+      "calendar_events": [
+        {
+          "id": "event_1",
+          "title": "Встреча с клиентом",
+          "date": "2024-12-26T15:00:00",
+          "description": "Обсуждение проекта"
+        },
+        {
+          "id": "event_2",
+          "title": "Совещание с командой",
+          "date": "2024-12-27T10:00:00",
+          "description": "Планирование на неделю"
+        }
+      ]
+    }
+  },
+  "metrics": {
+    "query_params": {
+      "last_7_days": {
+        "days": 7
+      },
+      "last_30_days": {
+        "days": 30
+      },
+      "quality_metrics": {
+        "days": 7,
+        "category": "quality"
+      },
+      "performance_metrics": {
+        "days": 7,
+        "category": "performance"
+      },
+      "specific_metric": {
+        "days": 7,
+        "metric": "response_time_p50"
+      }
+    },
+    "calculate_request": {
+      "by_days": {
+        "days": 7
+      },
+      "by_period": {
+        "period_start": "2024-12-01T00:00:00Z",
+        "period_end": "2024-12-31T23:59:59Z"
+      }
+    },
+    "expected_responses": {
+      "metric_example": {
+        "name": "response_time_p50",
+        "category": "performance",
+        "value": 3.5,
+        "target_value": 5.0,
+        "unit": "seconds",
+        "is_target_met": true,
+        "sample_size": 150,
+        "period_start": "2024-12-18T00:00:00Z",
+        "period_end": "2024-12-25T23:59:59Z",
+        "calculated_at": "2024-12-25T12:00:00Z",
+        "metadata": {}
+      },
+      "summary_example": {
+        "success": true,
+        "summary": {
+          "quality": [
+            {
+              "name": "answer_accuracy",
+              "category": "quality",
+              "value": 94.5,
+              "target_value": 90.0,
+              "unit": "percent",
+              "is_target_met": true,
+              "sample_size": 150
+            }
+          ],
+          "performance": [
+            {
+              "name": "response_time_p50",
+              "category": "performance",
+              "value": 3.5,
+              "target_value": 5.0,
+              "unit": "seconds",
+              "is_target_met": true,
+              "sample_size": 150
+            }
+          ]
+        },
+        "statistics": {
+          "total_requests": 200,
+          "completed_requests": 195,
+          "failed_requests": 5,
+          "success_rate": 97.5
+        },
+        "period": {
+          "start": "2024-12-18T00:00:00Z",
+          "end": "2024-12-25T23:59:59Z",
+          "days": 7
+        }
+      }
+    }
+  },
+  "error_examples": {
+    "validation_error": {
+      "success": false,
+      "error": "Email и пароль обязательны",
+      "error_code": "VALIDATION_ERROR"
+    },
+    "content_moderation": {
+      "success": false,
+      "error": "Сообщение не может быть обработано: обнаружен вредоносный контент",
+      "error_code": "CONTENT_MODERATION_FAILED"
+    },
+    "invalid_credentials": {
+      "success": false,
+      "error": "Неверный email или пароль",
+      "use_localstorage": true
+    },
+    "user_exists": {
+      "success": false,
+      "error": "Пользователь с таким email уже зарегистрирован"
+    },
+    "password_mismatch": {
+      "success": false,
+      "error": "Пароли не совпадают"
+    },
+    "weak_password": {
+      "success": false,
+      "error": "Пароль должен содержать минимум 6 символов"
+    },
+    "internal_error": {
+      "success": false,
+      "error": "Внутренняя ошибка сервера. Попробуйте позже.",
+      "error_code": "INTERNAL_ERROR",
+      "error_id": "1703500800.123456"
+    }
+  },
+  "chat_statuses": {
+    "pending": {
+      "success": true,
+      "status": "pending"
+    },
+    "processing": {
+      "success": true,
+      "status": "processing"
+    },
+    "completed": {
+      "success": true,
+      "status": "completed",
+      "response": "Баланс счета 1: 500,000 ₽, баланс счета 2: 250,000 ₽"
+    },
+    "failed": {
+      "success": true,
+      "status": "failed",
+      "error": "Ошибка подключения к Ollama"
+    }
+  },
+  "ollama_connection": {
+    "success": {
+      "api_available": true,
+      "model_available": true,
+      "error_details": null
+    },
+    "model_not_found": {
+      "api_available": true,
+      "model_available": false,
+      "error_details": "Модель 'deepseek-r1' не найдена"
+    },
+    "connection_error": {
+      "api_available": false,
+      "model_available": false,
+      "error_details": "Не удалось подключиться к API endpoint"
+    }
+  },
+  "chat_history": {
+    "chat_list": {
+      "success": true,
+      "chats": [
+        {
+          "chat_id": "chat_1764598137988",
+          "created_at": "2024-12-25T10:00:00Z",
+          "message_count": 5,
+          "last_message": "Покажи баланс моих счетов"
+        },
+        {
+          "chat_id": "chat_1764598137999",
+          "created_at": "2024-12-24T15:30:00Z",
+          "message_count": 3,
+          "last_message": "Сколько товаров в категории 'Электроника'?"
+        }
+      ]
+    },
+    "chat_detail": {
+      "success": true,
+      "chat_id": "chat_1764598137988",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Покажи баланс моих счетов",
+          "timestamp": "2024-12-25T10:00:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Баланс счета 1: 500,000 ₽, баланс счета 2: 250,000 ₽",
+          "timestamp": "2024-12-25T10:00:05Z"
+        },
+        {
+          "role": "user",
+          "content": "А сколько задолженности по налогам?",
+          "timestamp": "2024-12-25T10:01:00Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Общая задолженность по налогам: 85,000 ₽ (НДС: 35,000 ₽, Налог на прибыль: 50,000 ₽)",
+          "timestamp": "2024-12-25T10:01:05Z"
+        }
+      ]
+    }
+  }
+}
+

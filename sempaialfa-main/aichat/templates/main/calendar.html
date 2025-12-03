@@ -1,0 +1,432 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Календарь - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Система индикаторов загрузки -->
+    <script src="{% static 'js/loading-indicators.js' %}?v={{ cache_version }}"></script>
+    <!-- Lazy Loading для изображений -->
+    <script src="{% static 'js/lazy-loading.js' %}?v={{ cache_version }}"></script>
+    <!-- Система обработки ошибок -->
+    <script src="{% static 'js/error-handler.js' %}?v={{ cache_version }}"></script>
+    <!-- Система модальных окон -->
+    <script src="{% static 'js/modal.js' %}?v={{ cache_version }}"></script>
+</head>
+<body class="cabinet-page">
+    <!-- Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                </h1>
+                <p class="cabinet-subtitle">Календарь</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <a href="{% url 'cabinet' %}" class="calendar-back-link">← Назад в личный кабинет</a>
+                </div>
+
+                <!-- Calendar View -->
+                <div class="calendar-view">
+                    <div class="calendar-month-header">
+                        <button class="calendar-nav-btn" onclick="changeMonth(-1)">←</button>
+                        <h2 class="calendar-month-title" id="currentMonth"></h2>
+                        <button class="calendar-nav-btn" onclick="changeMonth(1)">→</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Календарь будет добавлен через JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Events List -->
+                <div class="calendar-events">
+                    <div class="calendar-events-header">
+                        <h3 class="calendar-events-title">События и заметки</h3>
+                        <button class="calendar-add-btn" onclick="openEventModal()">+ Добавить</button>
+                    </div>
+                    <div class="calendar-events-list" id="eventsList">
+                        <!-- События будут добавлены через JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Event Modal -->
+    <div class="event-modal" id="eventModal" style="display: none;">
+        <div class="event-modal-content">
+            <div class="event-modal-header">
+                <h3 class="event-modal-title" id="eventModalTitle">Добавить событие</h3>
+                <button class="event-modal-close" onclick="closeEventModal()">×</button>
+            </div>
+            <form class="event-modal-form" id="eventForm">
+                <div class="event-form-group">
+                    <label for="eventTitle" class="event-label">Название</label>
+                    <input type="text" id="eventTitle" class="event-input" placeholder="Введите название события" required>
+                </div>
+                <div class="event-form-group">
+                    <label for="eventDate" class="event-label">Дата и время</label>
+                    <input type="datetime-local" id="eventDate" class="event-input" required>
+                </div>
+                <div class="event-form-group">
+                    <label for="eventDescription" class="event-label">Описание</label>
+                    <textarea id="eventDescription" class="event-textarea" placeholder="Введите описание события" rows="4"></textarea>
+                </div>
+                <div class="event-form-actions">
+                    <button type="button" class="event-btn event-btn-cancel" onclick="closeEventModal()">Отмена</button>
+                    <button type="submit" class="event-btn event-btn-save">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Пути к изображениям для календаря
+        const CALENDAR_IMAGE_PATHS = {
+            red: "{% static 'images/red.svg' %}",
+            udalit: "{% static 'images/udalit.png' %}"
+        };
+        
+        let currentDate = new Date();
+        let editingEventId = null;
+
+        // Получить события календаря текущего пользователя
+        function getCalendarEvents() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return [];
+            const key = `calendarEvents_${email}`;
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        }
+
+        // Сохранить события календаря текущего пользователя
+        function saveCalendarEvents(events) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return;
+            const key = `calendarEvents_${email}`;
+            localStorage.setItem(key, JSON.stringify(events));
+        }
+
+        function formatDate(date) {
+            const d = new Date(date);
+            return d.toLocaleDateString('ru-RU', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                              'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            // Дни недели
+            const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            weekDays.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-day-header';
+                dayHeader.textContent = day;
+                grid.appendChild(dayHeader);
+            });
+
+            // Пустые ячейки до первого дня
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day-empty';
+                grid.appendChild(emptyCell);
+            }
+
+            // Дни месяца
+            const events = getCalendarEvents();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                
+                const dayDate = new Date(year, month, day);
+                const dayEvents = events.filter(e => {
+                    const eventDate = new Date(e.date);
+                    return eventDate.toDateString() === dayDate.toDateString();
+                });
+
+                dayCell.innerHTML = `
+                    <div class="calendar-day-number">${day}</div>
+                    ${dayEvents.length > 0 ? `<div class="calendar-day-events">${dayEvents.length}</div>` : ''}
+                `;
+
+                if (dayEvents.length > 0) {
+                    dayCell.classList.add('calendar-day-has-events');
+                }
+                
+                // Делаем все дни кликабельными
+                dayCell.style.cursor = 'pointer';
+                dayCell.onclick = () => openEventModalForDate(dayDate);
+
+                grid.appendChild(dayCell);
+            }
+
+            // Добавляем пустые ячейки в конце месяца, чтобы всегда было ровно 6 недель (42 ячейки всего: 7 заголовков + 35 дней)
+            // Уже добавлено: 7 заголовков + startingDayOfWeek пустых + daysInMonth дней
+            const totalCellsAdded = 7 + startingDayOfWeek + daysInMonth;
+            const totalCellsNeeded = 42; // 7 заголовков + 35 ячеек для 5 недель дней
+            const emptyCellsNeeded = totalCellsNeeded - totalCellsAdded;
+            
+            if (emptyCellsNeeded > 0) {
+                for (let i = 0; i < emptyCellsNeeded; i++) {
+                    const emptyCell = document.createElement('div');
+                    emptyCell.className = 'calendar-day-empty';
+                    grid.appendChild(emptyCell);
+                }
+            }
+
+            renderEventsList();
+        }
+
+        function renderEventsList() {
+            const events = getCalendarEvents();
+            const list = document.getElementById('eventsList');
+            list.innerHTML = '';
+
+            if (events.length === 0) {
+                list.innerHTML = '<div class="calendar-events-empty">Нет событий</div>';
+                return;
+            }
+
+            // Сортируем по дате
+            events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            events.forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.className = 'calendar-event-item';
+                eventItem.innerHTML = `
+                    <div class="calendar-event-content">
+                        <div class="calendar-event-title">${event.title}</div>
+                        <div class="calendar-event-date">${formatDate(event.date)}</div>
+                        ${event.description ? `<div class="calendar-event-description">${event.description}</div>` : ''}
+                    </div>
+                    <div class="calendar-event-actions">
+                        <button class="calendar-event-edit" onclick="editEvent('${event.id}')">✏️</button>
+                        <button class="calendar-event-delete" onclick="deleteEvent('${event.id}')">❌</button>
+                    </div>
+                `;
+                list.appendChild(eventItem);
+            });
+        }
+
+        function changeMonth(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            renderCalendar();
+        }
+
+        function openEventModal(eventId = null, presetDate = null) {
+            editingEventId = eventId;
+            const modal = document.getElementById('eventModal');
+            const form = document.getElementById('eventForm');
+            
+            if (eventId) {
+                const events = getCalendarEvents();
+                const event = events.find(e => e.id === eventId);
+                if (event) {
+                    document.getElementById('eventModalTitle').textContent = 'Редактировать событие';
+                    document.getElementById('eventTitle').value = event.title;
+                    const eventDate = new Date(event.date);
+                    const localDate = new Date(eventDate.getTime() - eventDate.getTimezoneOffset() * 60000);
+                    document.getElementById('eventDate').value = localDate.toISOString().slice(0, 16);
+                    document.getElementById('eventDescription').value = event.description || '';
+                }
+            } else {
+                document.getElementById('eventModalTitle').textContent = 'Добавить событие';
+                form.reset();
+                
+                // Если передана дата, предзаполняем поле даты
+                if (presetDate) {
+                    const localDate = new Date(presetDate.getTime() - presetDate.getTimezoneOffset() * 60000);
+                    document.getElementById('eventDate').value = localDate.toISOString().slice(0, 16);
+                }
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function openEventModalForDate(date) {
+            // Устанавливаем время на 12:00 по умолчанию
+            const dateWithTime = new Date(date);
+            dateWithTime.setHours(12, 0, 0, 0);
+            openEventModal(null, dateWithTime);
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').style.display = 'none';
+            editingEventId = null;
+            document.getElementById('eventForm').reset();
+        }
+
+        function editEvent(eventId) {
+            openEventModal(eventId);
+        }
+
+        function deleteEvent(eventId) {
+            showConfirm('Вы уверены, что хотите удалить это событие?', 'Подтверждение удаления').then(confirmed => {
+                if (!confirmed) return;
+                // Показываем индикатор загрузки
+                if (typeof showLoading === 'function') {
+                    showLoading('Удаление события...');
+                }
+                
+                try {
+                    let events = getCalendarEvents();
+                    events = events.filter(e => e.id !== eventId);
+                    saveCalendarEvents(events);
+                    renderCalendar();
+                } catch (error) {
+                    if (typeof handleError === 'function') {
+                        handleError(error, { action: 'deleteEvent', eventId: eventId });
+                    } else {
+                        console.error('Ошибка при удалении события:', error);
+                        showError('Произошла ошибка при удалении события');
+                    }
+                } finally {
+                    // Скрываем индикатор загрузки
+                    if (typeof hideLoading === 'function') {
+                        hideLoading();
+                    }
+                }
+            });
+        }
+
+
+        // Обработка формы
+        document.getElementById('eventForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('eventTitle').value;
+            const date = document.getElementById('eventDate').value;
+            const description = document.getElementById('eventDescription').value;
+
+            if (!title || !date) {
+                showWarning('Заполните название и дату события');
+                return;
+            }
+
+            // Показываем индикатор загрузки на форме
+            const form = document.getElementById('eventForm');
+            const submitButton = form.querySelector('button[type="submit"]');
+            
+            if (typeof showFormLoading === 'function') {
+                showFormLoading(form);
+            } else if (submitButton && typeof showButtonLoading === 'function') {
+                showButtonLoading(submitButton, submitButton.textContent);
+            }
+
+            try {
+                let events = getCalendarEvents();
+                let eventId = editingEventId;
+
+                if (editingEventId) {
+                    // Редактирование
+                    const event = events.find(e => e.id === editingEventId);
+                    if (event) {
+                        event.title = title;
+                        event.date = new Date(date).toISOString();
+                        event.description = description;
+                        event.notified = false;
+                        eventId = event.id;
+                    }
+                } else {
+                    // Добавление
+                    eventId = Date.now().toString();
+                    events.push({
+                        id: eventId,
+                        title: title,
+                        date: new Date(date).toISOString(),
+                        description: description,
+                        notified: false
+                    });
+                }
+
+                saveCalendarEvents(events);
+                
+                // Обновляем уведомления в главном окне, если оно открыто
+                if (window.opener && typeof window.opener.loadNotifications === 'function') {
+                    window.opener.loadNotifications();
+                }
+                
+                renderCalendar();
+                closeEventModal();
+            } catch (error) {
+                if (typeof handleError === 'function') {
+                    handleError(error, { action: 'saveEvent', editingEventId: editingEventId });
+                } else {
+                    console.error('Ошибка при сохранении события:', error);
+                    showError('Произошла ошибка при сохранении события');
+                }
+            } finally {
+                // Скрываем индикатор загрузки
+                if (typeof hideFormLoading === 'function') {
+                    hideFormLoading(form);
+                } else if (submitButton && typeof hideButtonLoading === 'function') {
+                    hideButtonLoading(submitButton);
+                }
+            }
+        });
+
+        // Инициализация
+        renderCalendar();
+        
+        // Слушаем изменения в localStorage для обновления календаря из других вкладок
+        window.addEventListener('storage', function(e) {
+            if (e.key && e.key.startsWith('calendarEvents_')) {
+                console.log('Обнаружено изменение в календаре из другой вкладки, обновляем...');
+                renderCalendar();
+            }
+        });
+        
+        // Также слушаем кастомные события для обновления на той же вкладке
+        window.addEventListener('calendarUpdated', function() {
+            console.log('Обнаружено событие обновления календаря, обновляем...');
+            renderCalendar();
+        });
+        
+        // Применение темы при загрузке страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+</body>
+</html>
+
