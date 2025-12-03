@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чеки - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Lazy Loading для изображений -->
+    <script src="{% static 'js/lazy-loading.js' %}?v={{ cache_version }}"></script>
+</head>
+<body class="cabinet-page">
+    <!-- Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                </h1>
+                <p class="cabinet-subtitle">Чеки</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <div class="receipts-container">
+                <div class="receipts-header">
+                    <a href="{% url 'cabinet' %}" class="receipts-back-link">← Назад в личный кабинет</a>
+                </div>
+
+                <div class="cabinet-feature-buttons" id="receiptsList">
+                    <!-- Чеки будут добавлены через JavaScript -->
+                </div>
+
+                <div class="receipts-empty" id="receiptsEmpty" style="display: none;">
+                    <p>Нет операций</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const receiptIconPath = "{% static 'images/ch.png' %}";
+        
+        // Получить чеки текущего пользователя
+        function getUserReceipts() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return [];
+            const key = `receipts_${email}`;
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        }
+        
+        // Сохранить чеки текущего пользователя
+        function saveUserReceipts(receipts) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) return;
+            const key = `receipts_${email}`;
+            localStorage.setItem(key, JSON.stringify(receipts));
+        }
+        
+        function loadReceipts() {
+            const receipts = getUserReceipts();
+            const receiptsList = document.getElementById('receiptsList');
+            const receiptsEmpty = document.getElementById('receiptsEmpty');
+
+            if (receipts.length === 0) {
+                receiptsList.style.display = 'none';
+                receiptsEmpty.style.display = 'block';
+                return;
+            }
+
+            receiptsList.style.display = 'flex';
+            receiptsEmpty.style.display = 'none';
+            receiptsList.innerHTML = '';
+
+            // Сортируем: сначала закрепленные, потом по дате (новые сверху)
+            receipts.sort((a, b) => {
+                const aPinned = a.pinned || false;
+                const bPinned = b.pinned || false;
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+                return b.id - a.id;
+            });
+
+            receipts.forEach(receipt => {
+                const receiptItem = document.createElement('div');
+                const isPinned = receipt.pinned || false;
+                receiptItem.className = `cabinet-feature-btn cabinet-feature-btn-dark receipt-item-block ${isPinned ? 'receipt-pinned' : ''}`;
+                const description = receipt.description ? `<br>${receipt.description}` : '';
+                const pinIcon = isPinned ? '📌' : '📍';
+                receiptItem.innerHTML = `
+                    <span class="cabinet-feature-icon">
+                        <img src="${receiptIconPath}" alt="Чек" loading="lazy">
+                    </span>
+                    <div class="cabinet-feature-content">
+                        <div class="cabinet-feature-title">
+                            ${isPinned ? '<span style="color: #ffaa00; margin-right: 5px;">📌</span>' : ''}
+                            ${receipt.operationType === 'Перевод' ? 'Перевод' : 'Пополнение'} - ${formatAmount(receipt.amount)} ₽
+                        </div>
+                        <div class="cabinet-feature-subtitle">
+                            Банк: ${receipt.bank} | Счет: ${receipt.accountNumber}${description}<br>
+                            Баланс: ${formatAmount(receipt.balance)} ₽ | ${receipt.date}
+                        </div>
+                    </div>
+                    <div class="receipt-item-actions">
+                        <button class="receipt-item-pin" onclick="togglePin(${receipt.id})" title="${isPinned ? 'Открепить' : 'Закрепить'}">
+                            ${pinIcon}
+                        </button>
+                        <button class="receipt-item-delete" onclick="deleteReceipt(${receipt.id})">×</button>
+                    </div>
+                `;
+                receiptsList.appendChild(receiptItem);
+            });
+        }
+
+        function formatAmount(amount) {
+            return new Intl.NumberFormat('ru-RU').format(amount);
+        }
+
+        function togglePin(id) {
+            let receipts = getUserReceipts();
+            const receipt = receipts.find(r => r.id === id);
+            if (receipt) {
+                receipt.pinned = !receipt.pinned;
+                saveUserReceipts(receipts);
+                loadReceipts();
+            }
+        }
+
+        // Показ модального окна подтверждения
+        function showConfirmModal(message, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            const messageEl = document.getElementById('confirmMessage');
+            messageEl.textContent = message;
+            modal.style.display = 'flex';
+            
+            document.getElementById('confirmYes').onclick = function() {
+                modal.style.display = 'none';
+                onConfirm();
+            };
+            
+            document.getElementById('confirmNo').onclick = function() {
+                modal.style.display = 'none';
+            };
+        }
+
+        function deleteReceipt(id) {
+            showConfirmModal('Вы уверены, что хотите удалить эту операцию?', function() {
+                let receipts = getUserReceipts();
+                receipts = receipts.filter(r => r.id !== id);
+                saveUserReceipts(receipts);
+                loadReceipts();
+            });
+        }
+
+        // Загружаем чеки при загрузке страницы
+        loadReceipts();
+    </script>
+
+    <!-- Confirmation Modal -->
+    <div class="confirm-modal" id="confirmModal" style="display: none;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title">Подтверждение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="confirmMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" id="confirmNo">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" id="confirmYes">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Применение темы при загрузке страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+</body>
+</html>
+

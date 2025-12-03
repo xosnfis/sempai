@@ -1,0 +1,524 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поддержка - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="index-header">
+        <div class="index-header-container">
+            <!-- Мобильное меню будет создано автоматически через JS -->
+            <div class="index-logo">
+                <a href="{% url 'index' %}" class="index-logo-link">
+                    <span class="index-logo-red">А</span>льфа-Ассистент
+                </a>
+            </div>
+            <nav class="index-nav">
+                <a href="#" class="index-nav-link index-nav-link-highlight" id="indexChatLink" onclick="handleChatClick(event)">ИИ-Чат</a>
+                <a href="#" class="index-nav-link" id="indexCabinetLink" onclick="handleCabinetClick(event)">Личный кабинет</a>
+                <a href="{% url 'scenarios' %}" class="index-nav-link">Возможности</a>
+                <a href="{% url 'support' %}" class="index-nav-link index-nav-link-active">Поддержка</a>
+            </nav>
+            <div class="index-header-actions">
+                <button class="index-theme-toggle" id="indexThemeToggle" onclick="toggleIndexTheme()" title="Переключить тему">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="indexThemeIcon">
+                        <path d="M12 3V1M12 23V21M21 12H23M1 12H3M18.364 18.364L19.778 19.778M4.222 4.222L5.636 5.636M18.364 5.636L19.778 4.222M4.222 19.778L5.636 18.364M12 18C15.314 18 18 15.314 18 12C18 8.686 15.314 6 12 6C8.686 6 6 8.686 6 12C6 15.314 8.686 18 12 18Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button id="indexAuthBtn" class="index-login-btn" onclick="handleAuthButtonClick(event)">Войти / Регистрация</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="support-page-main">
+        <!-- Hero Section -->
+        <section class="support-page-hero">
+            <div class="support-page-hero-content">
+                <h1 class="support-page-hero-title">Центр <span class="support-page-hero-title-red">поддержки</span></h1>
+                <p class="support-page-hero-subtitle">Мы всегда готовы помочь вам решить любые вопросы</p>
+                </div>
+        </section>
+
+        <!-- Support Content -->
+        <div class="support-page-content">
+                <!-- FAQ Section -->
+            <section class="support-page-faq-section">
+                <h2 class="support-page-section-title">Часто задаваемые вопросы</h2>
+                <div class="support-page-faq-list" id="faqList">
+                    <div class="support-page-faq-item">
+                        <div class="support-page-faq-question" onclick="toggleFAQ(0)">
+                            <span class="support-page-faq-text">Как начать работу с ИИ-ассистентом?</span>
+                            <span class="support-page-faq-toggle">▼</span>
+                            </div>
+                        <div class="support-page-faq-answer" id="faqAnswer0">
+                            <p>Просто перейдите в раздел "ИИ-Чат" и начните общение с ассистентом. Вы можете задавать вопросы на русском языке, и ассистент поможет вам с анализом данных, созданием отчетов, планированием и многим другим.</p>
+                        </div>
+                            </div>
+
+                    <div class="support-page-faq-item">
+                        <div class="support-page-faq-question" onclick="toggleFAQ(1)">
+                            <span class="support-page-faq-text">Какие данные может анализировать ассистент?</span>
+                            <span class="support-page-faq-toggle">▼</span>
+                            </div>
+                        <div class="support-page-faq-answer" id="faqAnswer1">
+                            <p>Ассистент может анализировать чеки и финансовые операции, данные инвентаризации, информацию о сотрудниках и зарплатах, события календаря, налоги и коммунальные услуги, загруженные документы (PDF, DOCX, XLSX, изображения) и балансы счетов.</p>
+                        </div>
+                            </div>
+
+                    <div class="support-page-faq-item">
+                        <div class="support-page-faq-question" onclick="toggleFAQ(2)">
+                            <span class="support-page-faq-text">Как создать событие в календаре через ассистента?</span>
+                            <span class="support-page-faq-toggle">▼</span>
+                            </div>
+                        <div class="support-page-faq-answer" id="faqAnswer2">
+                            <p>Просто напишите ассистенту в чате, например: "Запланируй встречу с клиентом на завтра в 15:00". Ассистент автоматически создаст событие в календаре и подтвердит его создание.</p>
+                        </div>
+                            </div>
+
+                    <div class="support-page-faq-item">
+                        <div class="support-page-faq-question" onclick="toggleFAQ(3)">
+                            <span class="support-page-faq-text">Как загрузить и проанализировать документ?</span>
+                            <span class="support-page-faq-toggle">▼</span>
+                            </div>
+                        <div class="support-page-faq-answer" id="faqAnswer3">
+                            <p>В чате с ассистентом нажмите кнопку прикрепления файла, выберите документ (PDF, DOCX, XLSX, изображения) и отправьте сообщение с запросом на анализ. Ассистент прочитает документ и предоставит краткое резюме или ответит на ваши вопросы.</p>
+                        </div>
+                            </div>
+
+                    <div class="support-page-faq-item">
+                        <div class="support-page-faq-question" onclick="toggleFAQ(4)">
+                            <span class="support-page-faq-text">Как получить отчет по финансам?</span>
+                            <span class="support-page-faq-toggle">▼</span>
+                            </div>
+                        <div class="support-page-faq-answer" id="faqAnswer4">
+                            <p>Спросите ассистента: "Создай отчет по моему бизнесу" или "Покажи расходы за месяц". Ассистент проанализирует ваши данные и создаст подробный отчет с таблицами и графиками, который можно экспортировать.</p>
+                        </div>
+                            </div>
+
+                    <div class="support-page-faq-item">
+                        <div class="support-page-faq-question" onclick="toggleFAQ(5)">
+                            <span class="support-page-faq-text">Как экспортировать историю чата?</span>
+                            <span class="support-page-faq-toggle">▼</span>
+                            </div>
+                        <div class="support-page-faq-answer" id="faqAnswer5">
+                            <p>В чате нажмите кнопку экспорта (иконка скачивания) и выберите формат: DOCX, CSV, JSON или PNG. История чата будет сохранена в выбранном формате на ваше устройство.</p>
+                        </div>
+                    </div>
+
+                    <div class="support-page-faq-item">
+                        <div class="support-page-faq-question" onclick="toggleFAQ(6)">
+                            <span class="support-page-faq-text">Можно ли редактировать сообщения в чате?</span>
+                            <span class="support-page-faq-toggle">▼</span>
+                </div>
+                        <div class="support-page-faq-answer" id="faqAnswer6">
+                            <p>Да, вы можете редактировать свои сообщения. Наведите на сообщение и нажмите кнопку редактирования. Отредактированное сообщение будет помечено как измененное с указанием времени редактирования.</p>
+                        </div>
+                    </div>
+
+                    <div class="support-page-faq-item">
+                        <div class="support-page-faq-question" onclick="toggleFAQ(7)">
+                            <span class="support-page-faq-text">Как работает визуализация данных?</span>
+                            <span class="support-page-faq-toggle">▼</span>
+                        </div>
+                        <div class="support-page-faq-answer" id="faqAnswer7">
+                            <p>Попросите ассистента создать график, например: "Покажи график расходов" или "Создай круговую диаграмму инвентаризации". Ассистент автоматически создаст интерактивный график на основе ваших данных, который можно экспортировать.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contact Form Section -->
+            <section class="support-page-contact-section">
+                <h2 class="support-page-section-title">Написать в поддержку</h2>
+                <p class="support-page-contact-description">Не нашли ответ на свой вопрос? Напишите нам, и мы обязательно поможем!</p>
+                <form class="support-page-contact-form" id="contactForm">
+                    <div class="support-page-form-group">
+                        <label for="contactSubject" class="support-page-label">Тема обращения</label>
+                        <input type="text" id="contactSubject" class="support-page-input" placeholder="Кратко опишите проблему" required>
+                    </div>
+                    <div class="support-page-form-group">
+                        <label for="contactMessage" class="support-page-label">Сообщение</label>
+                        <textarea id="contactMessage" class="support-page-textarea" placeholder="Опишите вашу проблему или вопрос подробно" rows="6" required></textarea>
+                    </div>
+                    <div class="support-page-form-actions">
+                        <button type="submit" class="support-page-submit-btn">Отправить сообщение</button>
+                        </div>
+                    </form>
+            </section>
+
+            <!-- Contact Info Section -->
+            <section class="support-page-info-section">
+                <h2 class="support-page-section-title">Другие способы связи</h2>
+                <div class="support-page-info-grid">
+                    <div class="support-page-info-card">
+                        <div class="support-page-info-icon">
+                            <img src="{% static 'images/6.png' %}" alt="Email" loading="lazy">
+                        </div>
+                        <h3 class="support-page-info-title">Email</h3>
+                        <p class="support-page-info-text">support@alfa-assistant.ru</p>
+                        <a href="mailto:support@alfa-assistant.ru" class="support-page-info-link">Написать письмо</a>
+                    </div>
+                    <div class="support-page-info-card">
+                        <div class="support-page-info-icon">
+                            <img src="{% static 'images/5.png' %}" alt="Чат с ИИ" loading="lazy">
+                        </div>
+                        <h3 class="support-page-info-title">Чат с ИИ</h3>
+                        <p class="support-page-info-text">Получите мгновенную помощь от ИИ-ассистента</p>
+                        <a href="{% url 'chat' %}" class="support-page-info-link">Перейти в чат</a>
+                    </div>
+                    <div class="support-page-info-card">
+                        <div class="support-page-info-icon">
+                            <img src="{% static 'images/4.png' %}" alt="Документация" loading="lazy">
+                        </div>
+                        <h3 class="support-page-info-title">Документация</h3>
+                        <p class="support-page-info-text">Подробные инструкции и руководства</p>
+                        <a href="{% url 'scenarios' %}" class="support-page-info-link">Смотреть сценарии</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div class="support-page-success-modal" id="successModal" style="display: none;">
+        <div class="support-page-success-modal-content">
+            <div class="support-page-success-icon">✓</div>
+            <h3 class="support-page-success-title">Сообщение отправлено!</h3>
+            <p class="support-page-success-message">Ваше обращение успешно отправлено в службу поддержки. Мы свяжемся с вами в ближайшее время.</p>
+            <button class="support-page-success-btn" onclick="closeSuccessModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-column">
+                <h4 class="footer-heading">О ПРОЕКТЕ</h4>
+                <a href="#" class="footer-link">О нас</a>
+                <a href="#" class="footer-link">Возможности</a>
+                <a href="{% url 'chat' %}" class="footer-link">Попробовать ассистента</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">ПОДДЕРЖКА</h4>
+                <a href="{% url 'support' %}" class="footer-link">Помощь</a>
+                <a href="{% url 'feedback' %}" class="footer-link">Обратная связь</a>
+                <a href="#" class="footer-link">Документация</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">КОНТАКТЫ</h4>
+                <p class="footer-text">Нижневартовск</p>
+                <a href="mailto:support@alfa-assistant.ru" class="footer-link">support@alfa-assistant.ru</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">МЫ В СОЦСЕТЯХ</h4>
+                <div class="footer-social">
+                    <a href="#" class="social-icon social-telegram">
+                        <img src="{% static 'images/tg.png' %}" alt="Telegram" loading="lazy">
+                    </a>
+                    <a href="#" class="social-icon social-vk">
+                        <img src="{% static 'images/vk.png' %}" alt="VKontakte" loading="lazy">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-legal">
+            <p>© 2025 Альфа-Ассистент. Все права защищены.</p>
+            <p><a href="#">Политика конфиденциальности</a> | <a href="#">Условия использования</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Функции смены темы
+        function toggleIndexTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            localStorage.setItem('theme', newTheme);
+            applyIndexTheme(newTheme);
+            updateIndexThemeIcon(newTheme);
+        }
+
+        function applyIndexTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.documentElement.classList.remove('dark-theme');
+            }
+        }
+
+        function updateIndexThemeIcon(theme) {
+            const themeIcon = document.getElementById('indexThemeIcon');
+            if (!themeIcon) return;
+            
+            // SVG для светлой темы (солнце)
+            const lightIcon = `<path d="M12 3V1M12 23V21M21 12H23M1 12H3M18.364 18.364L19.778 19.778M4.222 4.222L5.636 5.636M18.364 5.636L19.778 4.222M4.222 19.778L5.636 18.364M12 18C15.314 18 18 15.314 18 12C18 8.686 15.314 6 12 6C8.686 6 6 8.686 6 12C6 15.314 8.686 18 12 18Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`;
+            
+            // SVG для темной темы (луна)
+            const darkIcon = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+            
+            themeIcon.innerHTML = theme === 'dark' ? darkIcon : lightIcon;
+        }
+
+        // Переключение FAQ
+        function toggleFAQ(index) {
+            const answer = document.getElementById(`faqAnswer${index}`);
+            const question = event.currentTarget;
+            const toggle = question.querySelector('.support-page-faq-toggle');
+            const item = question.closest('.support-page-faq-item');
+            
+            if (answer.classList.contains('open')) {
+                // Закрываем
+                answer.classList.remove('open');
+                item.classList.remove('open');
+                toggle.textContent = '▼';
+                question.classList.remove('support-page-faq-question-active');
+            } else {
+                // Закрываем все остальные открытые FAQ
+                document.querySelectorAll('.support-page-faq-answer.open').forEach(openAnswer => {
+                    if (openAnswer !== answer) {
+                        openAnswer.classList.remove('open');
+                        openAnswer.closest('.support-page-faq-item').classList.remove('open');
+                        const openQuestion = openAnswer.previousElementSibling;
+                        openQuestion.querySelector('.support-page-faq-toggle').textContent = '▼';
+                        openQuestion.classList.remove('support-page-faq-question-active');
+                    }
+                });
+                
+                // Открываем текущий
+                answer.classList.add('open');
+                item.classList.add('open');
+                toggle.textContent = '▲';
+                question.classList.add('support-page-faq-question-active');
+            }
+        }
+
+        // Обработка формы обратной связи
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const subject = document.getElementById('contactSubject').value.trim();
+            const message = document.getElementById('contactMessage').value.trim();
+
+            if (subject && message) {
+                // Сохраняем обращение в localStorage
+                const contacts = JSON.parse(localStorage.getItem('supportContacts') || '[]');
+                contacts.push({
+                    id: Date.now(),
+                    subject: subject,
+                    message: message,
+                    date: new Date().toISOString()
+                });
+                localStorage.setItem('supportContacts', JSON.stringify(contacts));
+
+                // Показываем модальное окно успеха
+                document.getElementById('successModal').style.display = 'flex';
+                
+                // Очищаем форму
+                this.reset();
+            }
+        });
+
+        // Закрытие модального окна успеха
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        // Закрытие по клику вне модального окна
+        document.getElementById('successModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSuccessModal();
+            }
+        });
+
+        // Проверка авторизации пользователя
+        function isUserAuthenticated() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return false;
+            try {
+                const user = JSON.parse(currentUser);
+                return user && user.email;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Обработка клика на кнопку ИИ-Чат
+        function handleChatClick(event) {
+            event.preventDefault();
+            
+            if (isUserAuthenticated()) {
+                // Пользователь авторизован - переходим в чат
+                window.location.href = "{% url 'chat' %}";
+            } else {
+                // Пользователь не авторизован - показываем модальное окно
+                document.getElementById('loginRequiredModal').style.display = 'flex';
+            }
+        }
+
+        // Обработка клика на кнопку Личный кабинет
+        function handleCabinetClick(event) {
+            event.preventDefault();
+            
+            if (isUserAuthenticated()) {
+                // Пользователь авторизован - переходим в кабинет
+                window.location.href = "{% url 'cabinet' %}";
+            } else {
+                // Пользователь не авторизован - показываем модальное окно регистрации
+                document.getElementById('loginRequiredModal').style.display = 'flex';
+            }
+        }
+
+        // Обработка клика на кнопку авторизации/профиля
+        function handleAuthButtonClick(event) {
+            event.preventDefault();
+            
+            if (isUserAuthenticated()) {
+                // Показываем модальное окно профиля
+                showProfileModal();
+            } else {
+                // Переходим на страницу входа
+                window.location.href = "{% url 'login' %}";
+            }
+        }
+
+        // Обновление вида кнопки авторизации
+        function updateAuthButton() {
+            const authBtn = document.getElementById('indexAuthBtn');
+            if (!authBtn) return;
+            
+            if (isUserAuthenticated()) {
+                authBtn.textContent = 'Профиль';
+                authBtn.classList.add('index-profile-btn');
+            } else {
+                authBtn.textContent = 'Войти / Регистрация';
+                authBtn.classList.remove('index-profile-btn');
+            }
+        }
+
+        // Показать модальное окно профиля
+        function showProfileModal() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const modal = document.getElementById('indexProfileModal');
+            
+            // Заполняем данные профиля
+            document.getElementById('indexProfileName').textContent = currentUser.organization || 'Не указано';
+            document.getElementById('indexProfileEmail').textContent = currentUser.email || 'Не указано';
+            
+            modal.style.display = 'flex';
+        }
+
+        // Редактирование профиля
+        function editProfile() {
+            closeProfileModal();
+            window.location.href = "{% url 'cabinet' %}";
+        }
+
+        // Закрыть модальное окно профиля
+        function closeProfileModal() {
+            document.getElementById('indexProfileModal').style.display = 'none';
+        }
+
+        // Закрыть модальное окно авторизации
+        function closeLoginRequiredModal() {
+            document.getElementById('loginRequiredModal').style.display = 'none';
+        }
+
+        // Переход на страницу входа из модального окна
+        function goToLogin() {
+            window.location.href = "{% url 'login' %}";
+        }
+
+        // Выход из аккаунта
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                localStorage.removeItem('currentUser');
+                updateAuthButton();
+                closeProfileModal();
+                // Обновляем страницу для применения изменений
+                window.location.reload();
+            }
+        }
+
+        // Закрытие модальных окон по клику вне их
+        window.addEventListener('click', function(event) {
+            const profileModal = document.getElementById('indexProfileModal');
+            const loginModal = document.getElementById('loginRequiredModal');
+            
+            if (event.target === profileModal) {
+                closeProfileModal();
+            }
+            if (event.target === loginModal) {
+                closeLoginRequiredModal();
+            }
+        });
+
+        // Применение сохраненной темы при загрузке
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyIndexTheme(savedTheme);
+            updateIndexThemeIcon(savedTheme);
+            
+            // Обновление кнопки авторизации при загрузке
+            updateAuthButton();
+        });
+    </script>
+
+    <!-- Modal: Требуется авторизация -->
+    <div class="index-modal" id="loginRequiredModal" style="display: none;">
+        <div class="index-modal-content">
+            <div class="index-modal-header">
+                <h2 class="index-modal-title">Требуется авторизация</h2>
+                <button class="index-modal-close" onclick="closeLoginRequiredModal()">×</button>
+            </div>
+            <div class="index-modal-body">
+                <p class="index-modal-text">Для использования ИИ-чата необходимо войти в аккаунт или зарегистрироваться.</p>
+            </div>
+            <div class="index-modal-footer">
+                <button class="index-modal-btn index-modal-btn-secondary" onclick="closeLoginRequiredModal()">Отмена</button>
+                <button class="index-modal-btn index-modal-btn-primary" onclick="goToLogin()">Войти / Регистрация</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Профиль пользователя -->
+    <div class="index-modal" id="indexProfileModal" style="display: none;">
+        <div class="index-profile-modal-content">
+            <div class="index-profile-header">
+                <h2 class="index-profile-title">Профиль</h2>
+                <button class="index-profile-back-btn" onclick="closeProfileModal()" title="Закрыть">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="#ff3333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="index-profile-body">
+                <div class="index-profile-info-block">
+                    <div class="index-profile-name" id="indexProfileName">Не указано</div>
+                    <div class="index-profile-email" id="indexProfileEmail">Не указано</div>
+                </div>
+                <div class="index-profile-actions">
+                    <button class="index-profile-action-btn" onclick="editProfile()">
+                        <span>Редактировать профиль</span>
+                    </button>
+                    <button class="index-profile-action-btn index-profile-action-btn-logout" onclick="logout()">
+                        <span>Выйти</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
