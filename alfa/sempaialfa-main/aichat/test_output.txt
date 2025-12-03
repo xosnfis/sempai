@@ -1,0 +1,8 @@
+﻿python : Python 
+строка:1 знак:64
++ ... nansi\sempaialfa-main\aichat; python reset_migrations.py 2>&1 | Out-F ...
++                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Python :String) [], RemoteExcepti 
+   on
+    + FullyQualifiedErrorId : NativeCommandError
+ 

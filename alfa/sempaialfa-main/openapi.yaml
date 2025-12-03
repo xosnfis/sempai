@@ -1,0 +1,1169 @@
+openapi: 3.0.0
+info:
+  title: Альфа-Ассистент API
+  description: |
+    API для ИИ-помощника для бизнеса на базе Django и Ollama.
+    
+    Предоставляет функционал для:
+    - Общения с AI-помощником
+    - Управления пользователями и авторизации
+    - Работы с календарем
+    - Просмотра истории чатов
+    - Получения метрик качества работы системы
+    
+  version: 1.0.0
+  contact:
+    name: Альфа-Ассистент
+    email: support@alfa-assistant.ru
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8000
+    description: Локальный сервер разработки
+  - url: https://api.alfa-assistant.ru
+    description: Production сервер
+
+tags:
+  - name: Чат и AI
+    description: Endpoints для общения с AI-помощником
+  - name: Пользователи
+    description: Регистрация, авторизация и управление пользователями
+  - name: Календарь
+    description: Управление событиями календаря
+  - name: История чатов
+    description: Просмотр и управление историей чатов
+  - name: Метрики
+    description: Получение метрик качества работы системы
+  - name: Утилиты
+    description: Вспомогательные endpoints
+
+paths:
+  /api/chat/:
+    post:
+      tags:
+        - Чат и AI
+      summary: Отправка сообщения в чат
+      description: |
+        Отправляет сообщение AI-помощнику. Обработка происходит асинхронно.
+        Возвращает request_id для отслеживания статуса запроса.
+      operationId: sendChatMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: Текст сообщения пользователя
+                  example: "Покажи баланс моих счетов"
+                history:
+                  type: array
+                  description: История предыдущих сообщений
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
+                  example: []
+                userData:
+                  type: object
+                  description: Данные пользователя
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                    organization:
+                      type: string
+                  example:
+                    email: "user@example.com"
+                    organization: "ООО Компания"
+                files:
+                  type: array
+                  description: Прикрепленные файлы (base64)
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      type:
+                        type: string
+                      content:
+                        type: string
+                        format: byte
+                  example: []
+            examples:
+              simple_message:
+                summary: Простое сообщение
+                value:
+                  message: "Покажи баланс моих счетов"
+                  history: []
+                  userData:
+                    email: "user@example.com"
+                    organization: "ООО Компания"
+                  files: []
+              with_history:
+                summary: Сообщение с историей
+                value:
+                  message: "А сколько задолженности по налогам?"
+                  history:
+                    - role: "user"
+                      content: "Покажи баланс моих счетов"
+                    - role: "assistant"
+                      content: "Баланс счета 1: 500,000 ₽, баланс счета 2: 250,000 ₽"
+                  userData:
+                    email: "user@example.com"
+                    organization: "ООО Компания"
+                  files: []
+      responses:
+        '200':
+          description: Запрос принят в обработку
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  request_id:
+                    type: string
+                    format: uuid
+                    description: ID запроса для отслеживания статуса
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  status:
+                    type: string
+                    example: "processing"
+                  message:
+                    type: string
+                    example: "Запрос принят в обработку"
+              examples:
+                success:
+                  value:
+                    success: true
+                    request_id: "123e4567-e89b-12d3-a456-426614174000"
+                    status: "processing"
+                    message: "Запрос принят в обработку"
+        '400':
+          description: Ошибка валидации или модерации контента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                content_moderation:
+                  value:
+                    success: false
+                    error: "Сообщение не может быть обработано: обнаружен вредоносный контент"
+                    error_code: "CONTENT_MODERATION_FAILED"
+                invalid_json:
+                  value:
+                    success: false
+                    error: "Неверный формат данных. Проверьте корректность JSON."
+                    error_code: "INVALID_JSON"
+        '413':
+          description: Размер данных превышает максимально допустимый
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/chat-status/{request_id}/:
+    get:
+      tags:
+        - Чат и AI
+      summary: Проверка статуса запроса к AI
+      description: Проверяет статус обработки запроса к AI
+      operationId: getChatStatus
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          description: ID запроса
+          schema:
+            type: string
+            format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Статус запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                  response:
+                    type: string
+                    description: Ответ AI (если статус completed)
+                  error:
+                    type: string
+                    description: Ошибка (если статус failed)
+              examples:
+                processing:
+                  value:
+                    success: true
+                    status: "processing"
+                completed:
+                  value:
+                    success: true
+                    status: "completed"
+                    response: "Баланс счета 1: 500,000 ₽, баланс счета 2: 250,000 ₽"
+                failed:
+                  value:
+                    success: true
+                    status: "failed"
+                    error: "Ошибка подключения к Ollama"
+        '404':
+          description: Запрос не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/check-lm-studio/:
+    get:
+      tags:
+        - Утилиты
+      summary: Проверка подключения к Ollama
+      description: Проверяет доступность Ollama сервера и модели
+      operationId: checkOllamaConnection
+      responses:
+        '200':
+          description: Статус подключения
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_available:
+                    type: boolean
+                  model_available:
+                    type: boolean
+                  error_details:
+                    type: string
+              examples:
+                success:
+                  value:
+                    api_available: true
+                    model_available: true
+                    error_details: null
+                model_not_found:
+                  value:
+                    api_available: true
+                    model_available: false
+                    error_details: "Модель 'deepseek-r1' не найдена"
+
+  /api/register/:
+    post:
+      tags:
+        - Пользователи
+      summary: Регистрация нового пользователя
+      description: Создает нового пользователя в системе
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - confirmPassword
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  minLength: 6
+                  example: "password123"
+                confirmPassword:
+                  type: string
+                  example: "password123"
+                organization:
+                  type: string
+                  example: "ООО Компания"
+            examples:
+              valid:
+                value:
+                  email: "user@example.com"
+                  password: "password123"
+                  confirmPassword: "password123"
+                  organization: "ООО Компания"
+      responses:
+        '200':
+          description: Пользователь успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Пользователь успешно зарегистрирован"
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      username:
+                        type: string
+                      email:
+                        type: string
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_fields:
+                  value:
+                    success: false
+                    error: "Email и пароль обязательны"
+                password_mismatch:
+                  value:
+                    success: false
+                    error: "Пароли не совпадают"
+                weak_password:
+                  value:
+                    success: false
+                    error: "Пароль должен содержать минимум 6 символов"
+                user_exists:
+                  value:
+                    success: false
+                    error: "Пользователь с таким email уже зарегистрирован"
+
+  /api/login/:
+    post:
+      tags:
+        - Пользователи
+      summary: Авторизация пользователя
+      description: |
+        Авторизует пользователя в системе. Возвращает информацию об админ-правах.
+        Администраторы автоматически перенаправляются в админ-панель.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "password123"
+            examples:
+              valid:
+                value:
+                  email: "user@example.com"
+                  password: "password123"
+              admin:
+                value:
+                  email: "admin@example.com"
+                  password: "admin123"
+      responses:
+        '200':
+          description: Успешная авторизация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  is_admin:
+                    type: boolean
+                    description: Является ли пользователь администратором
+                    example: false
+                  username:
+                    type: string
+                    example: "user"
+                  email:
+                    type: string
+                    example: "user@example.com"
+              examples:
+                regular_user:
+                  value:
+                    success: true
+                    is_admin: false
+                    username: "user"
+                    email: "user@example.com"
+                admin_user:
+                  value:
+                    success: true
+                    is_admin: true
+                    username: "admin"
+                    email: "admin@example.com"
+        '400':
+          description: Ошибка авторизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_credentials:
+                  value:
+                    success: false
+                    error: "Неверный email или пароль"
+                    use_localstorage: true
+                missing_fields:
+                  value:
+                    success: false
+                    error: "Email и пароль обязательны"
+
+  /api/user-data/:
+    get:
+      tags:
+        - Пользователи
+      summary: Получение данных пользователя
+      description: Получает сохраненные данные пользователя
+      operationId: getUserData
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          example: "user@example.com"
+      responses:
+        '200':
+          description: Данные пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  userData:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      organization:
+                        type: string
+                      balance1:
+                        type: number
+                      balance2:
+                        type: number
+              example:
+                success: true
+                userData:
+                  email: "user@example.com"
+                  organization: "ООО Компания"
+                  balance1: 500000
+                  balance2: 250000
+    post:
+      tags:
+        - Пользователи
+      summary: Сохранение данных пользователя
+      description: Сохраняет данные пользователя
+      operationId: saveUserData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                userData:
+                  type: object
+                  description: Данные пользователя (любые поля)
+            example:
+              email: "user@example.com"
+              userData:
+                organization: "ООО Компания"
+                balance1: 500000
+                balance2: 250000
+      responses:
+        '200':
+          description: Данные успешно сохранены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /api/create-event/:
+    post:
+      tags:
+        - Календарь
+      summary: Создание события в календаре
+      description: Создает новое событие в календаре пользователя
+      operationId: createCalendarEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - date
+              properties:
+                title:
+                  type: string
+                  example: "Встреча с клиентом"
+                date:
+                  type: string
+                  format: date-time
+                  example: "2024-12-26T15:00:00"
+                description:
+                  type: string
+                  example: "Обсуждение проекта"
+                email:
+                  type: string
+                  format: email
+            example:
+              title: "Встреча с клиентом"
+              date: "2024-12-26T15:00:00"
+              description: "Обсуждение проекта"
+              email: "user@example.com"
+      responses:
+        '200':
+          description: Событие успешно создано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  event:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      title:
+                        type: string
+                      date:
+                        type: string
+                      description:
+                        type: string
+
+  /api/manage-calendar/:
+    post:
+      tags:
+        - Календарь
+      summary: Управление событиями календаря
+      description: Создание, обновление или удаление события в календаре
+      operationId: manageCalendarEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [CREATE_EVENT, UPDATE_EVENT, DELETE_EVENT]
+                  example: "UPDATE_EVENT"
+                event:
+                  type: string
+                  description: Название или ID события
+                  example: "Встреча с клиентом"
+                title:
+                  type: string
+                  example: "Новое название"
+                date:
+                  type: string
+                  format: date-time
+                  example: "2024-12-27T16:00:00"
+                description:
+                  type: string
+                  example: "Новое описание"
+                email:
+                  type: string
+                  format: email
+            examples:
+              create:
+                value:
+                  action: "CREATE_EVENT"
+                  title: "Встреча с клиентом"
+                  date: "2024-12-26T15:00:00"
+                  description: "Обсуждение проекта"
+                  email: "user@example.com"
+              update:
+                value:
+                  action: "UPDATE_EVENT"
+                  event: "Встреча с клиентом"
+                  title: "Встреча с клиентом (обновлено)"
+                  date: "2024-12-27T16:00:00"
+                  email: "user@example.com"
+              delete:
+                value:
+                  action: "DELETE_EVENT"
+                  event: "Встреча с клиентом"
+                  email: "user@example.com"
+      responses:
+        '200':
+          description: Операция выполнена успешно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /api/chat-history/:
+    get:
+      tags:
+        - История чатов
+      summary: Получение списка истории чатов
+      description: Возвращает список всех чатов пользователя
+      operationId: getChatHistory
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          example: "user@example.com"
+      responses:
+        '200':
+          description: Список чатов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  chats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        chat_id:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+                        message_count:
+                          type: integer
+                        last_message:
+                          type: string
+
+  /api/chat-history/{chat_id}/:
+    get:
+      tags:
+        - История чатов
+      summary: Получение детальной истории чата
+      description: Возвращает полную историю сообщений в чате
+      operationId: getChatHistoryDetail
+      parameters:
+        - name: chat_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "chat_1764598137988"
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          example: "user@example.com"
+      responses:
+        '200':
+          description: Детальная история чата
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  chat_id:
+                    type: string
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        role:
+                          type: string
+                          enum: [user, assistant]
+                        content:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+
+  /api/chat-history/{chat_id}/export/{format}/:
+    get:
+      tags:
+        - История чатов
+      summary: Экспорт истории чата
+      description: Экспортирует историю чата в указанном формате
+      operationId: exportChatHistory
+      parameters:
+        - name: chat_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "chat_1764598137988"
+        - name: format
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [json, txt, docx]
+          example: "docx"
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          example: "user@example.com"
+      responses:
+        '200':
+          description: Файл экспорта
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+            text/plain:
+              schema:
+                type: string
+
+  /api/metrics/:
+    get:
+      tags:
+        - Метрики
+      summary: Получение всех метрик за период
+      description: Возвращает все метрики качества работы системы за указанный период
+      operationId: getMetrics
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+            minimum: 1
+            maximum: 365
+          description: Количество дней для расчета периода
+          example: 7
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [quality, performance, reliability, security, user_experience, user_activity]
+          description: Фильтр по категории метрик
+          example: "quality"
+        - name: metric
+          in: query
+          schema:
+            type: string
+          description: Фильтр по названию метрики
+          example: "response_time_p50"
+      responses:
+        '200':
+          description: Список метрик
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  metrics:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Metric'
+                  period:
+                    $ref: '#/components/schemas/Period'
+                  total:
+                    type: integer
+                    description: Общее количество метрик
+              examples:
+                success:
+                  value:
+                    success: true
+                    metrics:
+                      - name: "response_time_p50"
+                        category: "performance"
+                        value: 3.5
+                        target_value: 5.0
+                        unit: "seconds"
+                        is_target_met: true
+                        sample_size: 150
+                        period_start: "2024-12-18T00:00:00Z"
+                        period_end: "2024-12-25T23:59:59Z"
+                        calculated_at: "2024-12-25T12:00:00Z"
+                        metadata: {}
+                    period:
+                      start: "2024-12-18T00:00:00Z"
+                      end: "2024-12-25T23:59:59Z"
+                      days: 7
+                    total: 1
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/metrics/summary/:
+    get:
+      tags:
+        - Метрики
+      summary: Получение сводки метрик
+      description: Возвращает сводку метрик по категориям для дашборда
+      operationId: getMetricsSummary
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+            minimum: 1
+            maximum: 365
+          description: Количество дней для расчета периода
+          example: 7
+      responses:
+        '200':
+          description: Сводка метрик
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  summary:
+                    type: object
+                    description: Метрики сгруппированные по категориям
+                    additionalProperties:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Metric'
+                  statistics:
+                    type: object
+                    properties:
+                      total_requests:
+                        type: integer
+                      completed_requests:
+                        type: integer
+                      failed_requests:
+                        type: integer
+                      success_rate:
+                        type: number
+                        format: float
+                  period:
+                    $ref: '#/components/schemas/Period'
+              examples:
+                success:
+                  value:
+                    success: true
+                    summary:
+                      quality:
+                        - name: "answer_accuracy"
+                          category: "quality"
+                          value: 94.5
+                          target_value: 90.0
+                          unit: "percent"
+                          is_target_met: true
+                          sample_size: 150
+                    statistics:
+                      total_requests: 200
+                      completed_requests: 195
+                      failed_requests: 5
+                      success_rate: 97.5
+                    period:
+                      start: "2024-12-18T00:00:00Z"
+                      end: "2024-12-25T23:59:59Z"
+                      days: 7
+
+  /api/metrics/calculate/:
+    post:
+      tags:
+        - Метрики
+      summary: Принудительный расчет метрик
+      description: Запускает расчет метрик за указанный период
+      operationId: calculateMetrics
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                days:
+                  type: integer
+                  default: 7
+                  minimum: 1
+                  maximum: 365
+                  example: 7
+                period_start:
+                  type: string
+                  format: date-time
+                  description: Начало периода (опционально)
+                  example: "2024-12-01T00:00:00Z"
+                period_end:
+                  type: string
+                  format: date-time
+                  description: Конец периода (опционально)
+                  example: "2024-12-31T23:59:59Z"
+            examples:
+              by_days:
+                value:
+                  days: 7
+              by_period:
+                value:
+                  period_start: "2024-12-01T00:00:00Z"
+                  period_end: "2024-12-31T23:59:59Z"
+      responses:
+        '200':
+          description: Метрики успешно рассчитаны
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Рассчитано 25 метрик"
+                  period:
+                    $ref: '#/components/schemas/Period'
+                  metrics_count:
+                    type: integer
+                    example: 25
+              example:
+                success: true
+                message: "Рассчитано 25 метрик"
+                period:
+                  start: "2024-12-18T00:00:00Z"
+                  end: "2024-12-25T23:59:59Z"
+                metrics_count: 25
+
+  /api/error-log/:
+    post:
+      tags:
+        - Утилиты
+      summary: Логирование ошибок
+      description: Сохраняет ошибку клиента в лог сервера
+      operationId: logError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - error
+              properties:
+                error:
+                  type: string
+                  description: Текст ошибки
+                  example: "Ошибка подключения к серверу"
+                url:
+                  type: string
+                  description: URL где произошла ошибка
+                  example: "/api/chat/"
+                userAgent:
+                  type: string
+                  description: User-Agent браузера
+                  example: "Mozilla/5.0..."
+      responses:
+        '200':
+          description: Ошибка успешно залогирована
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Ошибка залогирована"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Описание ошибки
+          example: "Ошибка валидации данных"
+        error_code:
+          type: string
+          description: Код ошибки (опционально)
+          example: "VALIDATION_ERROR"
+        error_id:
+          type: string
+          description: ID ошибки для отслеживания (опционально)
+          example: "1703500800.123456"
+        use_localstorage:
+          type: boolean
+          description: Флаг для использования localStorage (опционально)
+          example: false
+
+    Metric:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название метрики
+          example: "response_time_p50"
+        category:
+          type: string
+          enum: [quality, performance, reliability, security, user_experience, user_activity]
+          description: Категория метрики
+          example: "performance"
+        value:
+          type: number
+          format: float
+          description: Значение метрики
+          example: 3.5
+        target_value:
+          type: number
+          format: float
+          description: Целевое значение метрики
+          example: 5.0
+        unit:
+          type: string
+          enum: [percent, seconds, requests_per_minute, count]
+          description: Единица измерения
+          example: "seconds"
+        is_target_met:
+          type: boolean
+          description: Достигнуто ли целевое значение
+          example: true
+        sample_size:
+          type: integer
+          description: Размер выборки
+          example: 150
+        period_start:
+          type: string
+          format: date-time
+          description: Начало периода расчета
+          example: "2024-12-18T00:00:00Z"
+        period_end:
+          type: string
+          format: date-time
+          description: Конец периода расчета
+          example: "2024-12-25T23:59:59Z"
+        calculated_at:
+          type: string
+          format: date-time
+          description: Время расчета метрики
+          example: "2024-12-25T12:00:00Z"
+        metadata:
+          type: object
+          description: Дополнительные данные метрики
+          additionalProperties: true
+          example: {}
+
+    Period:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Начало периода
+          example: "2024-12-18T00:00:00Z"
+        end:
+          type: string
+          format: date-time
+          description: Конец периода
+          example: "2024-12-25T23:59:59Z"
+        days:
+          type: integer
+          description: Количество дней в периоде
+          example: 7
+
+  examples:
+    TestUser:
+      email: "test@example.com"
+      password: "test123"
+      organization: "Тестовая компания"
+    
+    TestAdmin:
+      email: "admin@example.com"
+      password: "admin123"
+      organization: "Администратор"
+    
+    TestChatMessage:
+      message: "Покажи баланс моих счетов"
+      history: []
+      userData:
+        email: "test@example.com"
+        organization: "Тестовая компания"
+      files: []
+    
+    TestCalendarEvent:
+      title: "Встреча с клиентом"
+      date: "2024-12-26T15:00:00"
+      description: "Обсуждение проекта"
+      email: "test@example.com"
+

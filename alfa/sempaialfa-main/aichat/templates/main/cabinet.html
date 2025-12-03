@@ -1,0 +1,1444 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - Альфа-Ассистент</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- Система индикаторов загрузки -->
+    <script src="{% static 'js/loading-indicators.js' %}?v={{ cache_version }}"></script>
+    <!-- Lazy Loading для изображений -->
+    <script src="{% static 'js/lazy-loading.js' %}?v={{ cache_version }}"></script>
+    <!-- Система обработки ошибок -->
+    <script src="{% static 'js/error-handler.js' %}?v={{ cache_version }}"></script>
+    <!-- Система модальных окон -->
+    <script src="{% static 'js/modal.js' %}?v={{ cache_version }}"></script>
+    <!-- Мобильное меню -->
+    <script src="{% static 'js/mobile-menu.js' %}?v={{ cache_version }}"></script>
+</head>
+<body class="cabinet-page">
+    <!-- Top Navigation Header -->
+    <header class="index-header">
+        <div class="index-header-container">
+            <!-- Мобильное меню будет создано автоматически через JS -->
+            <div class="index-logo">
+                <a href="{% url 'index' %}" class="index-logo-link">
+                    <span class="index-logo-red">А</span>льфа-Ассистент
+                </a>
+            </div>
+            <nav class="index-nav">
+                <a href="#" class="index-nav-link index-nav-link-highlight" id="indexChatLink" onclick="handleChatClick(event)">ИИ-Чат</a>
+                <a href="#" class="index-nav-link index-nav-link-active" id="indexCabinetLink" onclick="handleCabinetClick(event)">Личный кабинет</a>
+                <a href="{% url 'scenarios' %}" class="index-nav-link">Возможности</a>
+                <a href="{% url 'support' %}" class="index-nav-link">Поддержка</a>
+            </nav>
+            <div class="index-header-actions">
+                <button class="index-theme-toggle" id="indexThemeToggle" onclick="toggleIndexTheme()" title="Переключить тему">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="indexThemeIcon">
+                        <path d="M12 3V1M12 23V21M21 12H23M1 12H3M18.364 18.364L19.778 19.778M4.222 4.222L5.636 5.636M18.364 5.636L19.778 4.222M4.222 19.778L5.636 18.364M12 18C15.314 18 18 15.314 18 12C18 8.686 15.314 6 12 6C8.686 6 6 8.686 6 12C6 15.314 8.686 18 12 18Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button id="indexAuthBtn" class="index-login-btn" onclick="handleAuthButtonClick(event)">Войти / Регистрация</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Cabinet Header -->
+    <header class="cabinet-header">
+        <div class="cabinet-header-top">
+            <div class="cabinet-logo-section">
+                <h1 class="cabinet-logo">
+                    <a href="{% url 'index' %}" class="cabinet-logo-link">
+                        <span class="cabinet-logo-red">А</span>льфа-Ассистент
+                    </a>
+                </h1>
+                <p class="cabinet-subtitle">Личный кабинет</p>
+            </div>
+            <div class="cabinet-header-right">
+                
+            </div>
+        </div>
+    </header>
+
+    <!-- Sticky Navigation Bar -->
+    <div class="cabinet-sticky-nav-wrapper">
+        <div class="cabinet-sticky-nav-container">
+            <nav class="cabinet-nav">
+                <a href="#finance" class="cabinet-nav-link">Финансы</a>
+                <a href="#documents" class="cabinet-nav-link">Документы</a>
+                <a href="#communication" class="cabinet-nav-link">Связь</a>
+            </nav>
+            <div class="cabinet-sticky-right">
+                <div class="cabinet-notification-icon-sticky" id="notificationIconSticky" onclick="toggleNotifications()">
+                    <img src="{% static 'images/kollokol.png' %}" alt="Уведомления" class="notification-bell" loading="lazy">
+                    <span class="notification-badge" id="notificationBadgeSticky" style="display: none;">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky AI Widget -->
+    <div class="cabinet-sticky-ai-wrapper">
+        <a href="{% url 'chat' %}" class="cabinet-ai-widget-link">
+            <div class="cabinet-ai-widget">
+                <div class="cabinet-ai-icon">
+                    <span class="cabinet-ai-icon-text">Ai</span>
+                </div>
+                <div class="cabinet-ai-text">
+                    <div class="cabinet-ai-title">AI- помощник</div>
+                    <div class="cabinet-ai-subtitle">ИИ-бот даст ответы на интересующие вас вопросы</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <main class="cabinet-main">
+        <div class="cabinet-container">
+            <!-- Quick Actions Section -->
+            <section class="cabinet-quick-actions-section">
+                <div class="cabinet-quick-actions-header">
+                    <div class="cabinet-quick-actions-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="#ff3333"/>
+                            <circle cx="12" cy="20" r="2" fill="#ff3333"/>
+                        </svg>
+                    </div>
+                    <h2 class="cabinet-quick-actions-title">Быстрые действия через ИИ-ассистента</h2>
+                </div>
+                
+                <div class="cabinet-quick-actions-grid">
+                    <button class="cabinet-quick-action-btn" onclick="goToChatWithAction('analyze')">
+                        <div class="cabinet-quick-action-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="20" width="4" height="8" rx="1" fill="#ff3333"/>
+                                <rect x="10" y="14" width="4" height="14" rx="1" fill="#ff3333"/>
+                                <rect x="16" y="10" width="4" height="18" rx="1" fill="#ff3333"/>
+                                <rect x="22" y="6" width="4" height="22" rx="1" fill="#ff3333"/>
+                            </svg>
+                        </div>
+                        <span class="cabinet-quick-action-text">Проанализировать данные</span>
+                    </button>
+                    
+                    <button class="cabinet-quick-action-btn" onclick="goToChatWithAction('report')">
+                        <div class="cabinet-quick-action-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="6" y="4" width="20" height="24" rx="2" stroke="#ff3333" stroke-width="2" fill="none"/>
+                                <path d="M10 10h12M10 14h12M10 18h8M10 22h12" stroke="#ff3333" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M14 22l2 2 4-4" stroke="#ff3333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="cabinet-quick-action-text">Создать отчет</span>
+                    </button>
+                    
+                    <button class="cabinet-quick-action-btn" onclick="goToChatWithAction('plan')">
+                        <div class="cabinet-quick-action-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="6" y="6" width="20" height="20" rx="2" stroke="#ff3333" stroke-width="2" fill="none"/>
+                                <path d="M10 4v4M22 4v4M6 12h20" stroke="#ff3333" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="16" cy="20" r="2" fill="#ff3333"/>
+                            </svg>
+                        </div>
+                        <span class="cabinet-quick-action-text">Планирование</span>
+                    </button>
+                    
+                    <button class="cabinet-quick-action-btn" onclick="goToChatWithAction('question')">
+                        <div class="cabinet-quick-action-icon">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16 8c-3.314 0-6 2.686-6 6v1h4v-1c0-1.105.895-2 2-2s2 .895 2 2c0 2-4 2-4 4v2h4v-2c0-1.105.895-2 2-2s2 .895 2 2v2h4v-2c0-3.314-2.686-6-6-6z" fill="#ff3333"/>
+                                <circle cx="16" cy="24" r="1.5" fill="#ff3333"/>
+                            </svg>
+                        </div>
+                        <span class="cabinet-quick-action-text">Задать вопрос</span>
+                    </button>
+                </div>
+            </section>
+            
+            <!-- Finance Section -->
+            <section id="finance" class="cabinet-section cabinet-section-finance">
+                <h2 class="cabinet-section-title cabinet-section-title-red">Финансы</h2>
+                <div class="cabinet-finance-info">
+                    <div class="cabinet-account-box">
+                        <div class="cabinet-account-info">
+                            <div class="cabinet-account-label">Комбо-счет</div>
+                            <div class="cabinet-accounts-switcher">
+                                <button class="cabinet-account-switch-btn active" id="account1Btn" onclick="switchAccount(1)">
+                                    <span class="cabinet-account-switch-number">1234</span>
+                                    <span class="cabinet-account-switch-amount" id="account1Balance">237 000 ₽</span>
+                                </button>
+                                <button class="cabinet-account-switch-btn" id="account2Btn" onclick="switchAccount(2)">
+                                    <span class="cabinet-account-switch-number">5678</span>
+                                    <span class="cabinet-account-switch-amount" id="account2Balance">50 000 ₽</span>
+                                </button>
+                            </div>
+                        </div>
+                        <a href="{% url 'transfer' %}" class="cabinet-account-transfer-link">
+                            <div class="cabinet-account-number">Перевести</div>
+                        </a>
+                    </div>
+                    <div class="cabinet-debt-box" id="totalDebtBox">
+                        Задолженность 0 ₽
+                    </div>
+                </div>
+                <div class="cabinet-feature-buttons">
+                    <a href="{% url 'taxes' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/nv.png' %}" alt="Налоговые выплаты" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Налоговые выплаты</div>
+                            <div class="cabinet-feature-subtitle">Налоговые выплаты</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'utilities' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/ku.png' %}" alt="Коммунальные услуги" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Коммунальные услуги</div>
+                            <div class="cabinet-feature-subtitle">Оплата комунальных услуг, просмотр квитанций</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'receipts' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/ch.png' %}" alt="Чеки" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Чеки</div>
+                            <div class="cabinet-feature-subtitle">Чеки выплат, поступление оплат</div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Calendar Button (Left Side) -->
+            <a href="{% url 'calendar' %}" class="cabinet-calendar-button" id="calendarButton" title="Календарь">
+                <div class="cabinet-mini-calendar">
+                    <div class="cabinet-mini-calendar-header">
+                        <div class="cabinet-mini-calendar-month" id="miniCalendarMonth"></div>
+                        <div class="cabinet-mini-calendar-year" id="miniCalendarYear"></div>
+                    </div>
+                    <div class="cabinet-mini-calendar-day" id="miniCalendarDay"></div>
+                    <div class="cabinet-mini-calendar-weekday" id="miniCalendarWeekday"></div>
+                </div>
+            </a>
+
+            <!-- Documents Section -->
+            <section id="documents" class="cabinet-section">
+                <h2 class="cabinet-section-title">Документы</h2>
+                <div class="cabinet-feature-buttons">
+                    <a href="{% url 'documents' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/dog.png' %}" alt="Договора" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Договора</div>
+                            <div class="cabinet-feature-subtitle">Договора с организациями и партнерами</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'inventory' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/inv.png' %}" alt="Инвентаризация" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Инвентаризация</div>
+                            <div class="cabinet-feature-subtitle">Учет товара и инвентаря</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'employees' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/sotr.png' %}" alt="Сотрудники" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Сотрудники</div>
+                            <div class="cabinet-feature-subtitle">Учет сотрудников и выплат</div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Communication Section -->
+            <section id="communication" class="cabinet-section">
+                <h2 class="cabinet-section-title">Связь</h2>
+                <div class="cabinet-feature-buttons">
+                    <a href="{% url 'mail' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/poch.png' %}" alt="Почта" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Почта</div>
+                            <div class="cabinet-feature-subtitle">Общение с организациями и контрагентами</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'feedback' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/obr.png' %}" alt="Обратная связь" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Обратная связь</div>
+                            <div class="cabinet-feature-subtitle">Обратная связь с потребителями</div>
+                        </div>
+                    </a>
+                    <a href="{% url 'support' %}" class="cabinet-feature-btn cabinet-feature-btn-dark" style="text-decoration: none; display: block;">
+                        <span class="cabinet-feature-icon">
+                            <img src="{% static 'images/pod.png' %}" alt="Поддержка" loading="lazy">
+                        </span>
+                        <div class="cabinet-feature-content">
+                            <div class="cabinet-feature-title">Поддержка</div>
+                            <div class="cabinet-feature-subtitle">При возникновении проблем, обратитесь в поддержку</div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Security Notice -->
+            <div class="cabinet-security-notice">
+                <span class="cabinet-security-icon">
+                    <img src="{% static 'images/shit.png' %}" alt="Безопасность" loading="lazy">
+                </span>
+                <span class="cabinet-security-text" data-i18n="security-text">Мы гарантируем безопасность и сохранность ваших данных</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notifications Popup -->
+    <div class="notifications-popup" id="notificationsPopup" style="display: none;">
+        <div class="notifications-popup-header">
+            <h3 class="notifications-popup-title">Уведомления</h3>
+            <button class="notifications-popup-close" onclick="toggleNotifications()">←</button>
+        </div>
+        <div class="notifications-popup-content" id="notificationsContent">
+            <!-- Уведомления будут добавлены через JavaScript -->
+        </div>
+        <div class="notifications-empty" id="notificationsEmpty" style="display: none;">
+            <p>Нет уведомлений</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-column">
+                <h4 class="footer-heading">О ПРОЕКТЕ</h4>
+                <a href="#" class="footer-link">О нас</a>
+                <a href="#" class="footer-link">Возможности</a>
+                <a href="{% url 'chat' %}" class="footer-link">Попробовать ассистента</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">ПОДДЕРЖКА</h4>
+                <a href="{% url 'support' %}" class="footer-link">Помощь</a>
+                <a href="{% url 'feedback' %}" class="footer-link">Обратная связь</a>
+                <a href="#" class="footer-link">Документация</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">КОНТАКТЫ</h4>
+                <p class="footer-text">Нижневартовск</p>
+                <a href="mailto:support@alfa-assistant.ru" class="footer-link">support@alfa-assistant.ru</a>
+            </div>
+            <div class="footer-column">
+                <h4 class="footer-heading">МЫ В СОЦСЕТЯХ</h4>
+                <div class="footer-social">
+                    <a href="#" class="social-icon social-telegram">
+                        <img src="{% static 'images/tg.png' %}" alt="Telegram" loading="lazy">
+                    </a>
+                    <a href="#" class="social-icon social-vk">
+                        <img src="{% static 'images/vk.png' %}" alt="VKontakte" loading="lazy">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-legal">
+            <p>© 2025 Альфа-Ассистент. Все права защищены.</p>
+            <p><a href="#">Политика конфиденциальности</a> | <a href="#">Условия использования</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Получаем текущий выбранный счет
+        function getCurrentAccount() {
+            return parseInt(localStorage.getItem('currentAccount') || '1');
+        }
+
+        // Сохраняем текущий выбранный счет
+        function setCurrentAccount(accountNum) {
+            localStorage.setItem('currentAccount', accountNum.toString());
+        }
+
+        // Получаем баланс счета
+        function getAccountBalance(accountNum) {
+            const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+            const savedBalance = localStorage.getItem(key);
+            if (savedBalance) {
+                return parseFloat(savedBalance);
+            }
+            return accountNum === 1 ? 237000 : 50000;
+        }
+
+        // Сохраняем баланс счета
+        function setAccountBalance(accountNum, balance) {
+            const key = accountNum === 1 ? 'accountBalance' : 'accountBalance2';
+            localStorage.setItem(key, balance.toString());
+        }
+
+        // Функция для обновления отображения балансов
+        function updateBalances() {
+            const balance1 = getAccountBalance(1);
+            const balance2 = getAccountBalance(2);
+            
+            document.getElementById('account1Balance').textContent = 
+                new Intl.NumberFormat('ru-RU').format(balance1) + ' ₽';
+            document.getElementById('account2Balance').textContent = 
+                new Intl.NumberFormat('ru-RU').format(balance2) + ' ₽';
+        }
+
+        // Функция для расчета общей задолженности
+        function calculateTotalDebt() {
+            let totalDebt = 0;
+            const PENALTY_RATE = 0.15;
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+
+            // Расчет задолженности по коммунальным услугам
+            const utilitiesData = JSON.parse(localStorage.getItem('utilitiesData') || '{}');
+            const utilities = [
+                { id: 'electricity', basePrice: 5000 },
+                { id: 'water', basePrice: 3000 },
+                { id: 'heating', basePrice: 8000 },
+                { id: 'waste', basePrice: 2000 },
+                { id: 'security', basePrice: 6000 },
+                { id: 'internet', basePrice: 1500 }
+            ];
+
+            utilities.forEach(util => {
+                const utilData = utilitiesData[util.id];
+                if (utilData) {
+                    const daysSincePayment = utilData.lastPayment ? 
+                        Math.floor((now - utilData.lastPayment) / oneDay) : 
+                        Math.floor((now - utilData.lastUpdate) / oneDay);
+                    const daysOverdue = Math.max(0, daysSincePayment - 30);
+                    const penalty = utilData.debt * PENALTY_RATE * daysOverdue;
+                    totalDebt += utilData.debt + penalty;
+                }
+            });
+
+            // Расчет задолженности по налогам
+            const taxesData = JSON.parse(localStorage.getItem('taxesData') || '{}');
+            const taxes = [
+                { id: 'profit', basePrice: 50000 },
+                { id: 'vat', basePrice: 35000 },
+                { id: 'property', basePrice: 25000 },
+                { id: 'insurance', basePrice: 40000 }
+            ];
+
+            taxes.forEach(tax => {
+                const taxData = taxesData[tax.id];
+                if (taxData) {
+                    const daysSincePayment = taxData.lastPayment ? 
+                        Math.floor((now - taxData.lastPayment) / oneDay) : 
+                        Math.floor((now - taxData.lastUpdate) / oneDay);
+                    const daysOverdue = Math.max(0, daysSincePayment - 30);
+                    const penalty = taxData.debt * PENALTY_RATE * daysOverdue;
+                    totalDebt += taxData.debt + penalty;
+                }
+            });
+
+            return totalDebt;
+        }
+
+        // Функция для обновления отображения задолженности
+        function updateTotalDebt() {
+            const totalDebt = calculateTotalDebt();
+            const debtBox = document.getElementById('totalDebtBox');
+            
+            if (debtBox) {
+                const formattedDebt = new Intl.NumberFormat('ru-RU').format(Math.round(totalDebt));
+                debtBox.textContent = 'Задолженность ' + formattedDebt + ' ₽';
+            }
+        }
+
+        // Переключение между счетами
+        function switchAccount(accountNum) {
+            setCurrentAccount(accountNum);
+            
+            // Обновляем активную кнопку
+            document.getElementById('account1Btn').classList.toggle('active', accountNum === 1);
+            document.getElementById('account2Btn').classList.toggle('active', accountNum === 2);
+        }
+
+        // Обновляем балансы при загрузке страницы
+        updateBalances();
+        
+        // Устанавливаем активный счет
+        const currentAccount = getCurrentAccount();
+        switchAccount(currentAccount);
+
+        // Обновляем задолженность при загрузке страницы
+        updateTotalDebt();
+
+        // Обновляем балансы и задолженность при возврате на страницу (через событие focus)
+        window.addEventListener('focus', function() {
+            updateBalances();
+            updateTotalDebt();
+        });
+
+        // Обновляем балансы и задолженность при изменении localStorage (если открыто несколько вкладок)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'accountBalance' || e.key === 'accountBalance2' || 
+                e.key === 'utilitiesData' || e.key === 'taxesData') {
+                updateBalances();
+                updateTotalDebt();
+            }
+        });
+
+        // Обновляем задолженность каждую минуту
+        setInterval(updateTotalDebt, 60000);
+
+        // Функции для работы с уведомлениями
+        function toggleNotifications() {
+            const popup = document.getElementById('notificationsPopup');
+            if (popup.style.display === 'none') {
+                loadNotifications();
+                popup.style.display = 'block';
+            } else {
+                popup.style.display = 'none';
+            }
+        }
+
+        function loadNotifications() {
+            const content = document.getElementById('notificationsContent');
+            const empty = document.getElementById('notificationsEmpty');
+            content.innerHTML = '';
+
+            let notifications = [];
+            let savedNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+
+            // Уведомления о задолженностях
+            const totalDebt = calculateTotalDebt();
+            if (totalDebt > 0) {
+                // Проверяем, есть ли уже уведомление о задолженности
+                let debtNotification = savedNotifications.find(n => n.type === 'debt' && !n.read);
+                
+                const formattedDebt = new Intl.NumberFormat('ru-RU').format(Math.round(totalDebt));
+                const debtMessage = `Общая задолженность: ${formattedDebt} ₽`;
+                
+                if (!debtNotification) {
+                    // Создаем новое уведомление
+                    debtNotification = {
+                        id: 'debt-' + Date.now(),
+                        type: 'debt',
+                        title: 'Задолженность',
+                        message: debtMessage,
+                        date: new Date().toLocaleString('ru-RU'),
+                        read: false
+                    };
+                    savedNotifications.push(debtNotification);
+                    localStorage.setItem('notifications', JSON.stringify(savedNotifications));
+                } else {
+                    // Обновляем существующее уведомление
+                    debtNotification.title = 'Задолженность';
+                    debtNotification.message = debtMessage;
+                    debtNotification.date = new Date().toLocaleString('ru-RU');
+                    localStorage.setItem('notifications', JSON.stringify(savedNotifications));
+                }
+            } else {
+                // Удаляем уведомления о задолженности, если долга нет
+                savedNotifications = savedNotifications.filter(n => n.type !== 'debt');
+                localStorage.setItem('notifications', JSON.stringify(savedNotifications));
+            }
+
+            // Уведомления о событиях календаря текущего пользователя
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            const calendarEventsKey = email ? `calendarEvents_${email}` : 'calendarEvents';
+            const calendarEvents = JSON.parse(localStorage.getItem(calendarEventsKey) || '[]');
+            const now = new Date();
+            
+            calendarEvents.forEach(event => {
+                if (!event || !event.date) return;
+                
+                const eventDate = new Date(event.date);
+                if (isNaN(eventDate.getTime())) return;
+                
+                const timeDiff = eventDate.getTime() - now.getTime();
+                const hoursUntil = timeDiff / (1000 * 60 * 60);
+                
+                // Уведомление за 24 часа до события
+                if (hoursUntil > 0 && hoursUntil <= 24) {
+                    // Проверяем, есть ли уже уведомление для этого события
+                    let eventNotification = savedNotifications.find(n => n.type === 'calendar' && n.eventId === event.id && !n.read);
+                    
+                    if (!eventNotification) {
+                        // Создаем новое уведомление
+                        const eventTitle = event.title || 'Событие';
+                        const eventDescription = event.description ? ` - ${event.description}` : '';
+                        eventNotification = {
+                            id: 'event-' + event.id + '-' + Date.now(),
+                            type: 'calendar',
+                            title: 'Событие в календаре',
+                            message: `Напоминание: ${eventTitle}${eventDescription} - ${eventDate.toLocaleString('ru-RU', { 
+                                year: 'numeric', 
+                                month: '2-digit', 
+                                day: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            })}`,
+                            date: new Date().toLocaleString('ru-RU'),
+                            read: false,
+                            eventId: event.id
+                        };
+                        savedNotifications.push(eventNotification);
+                        localStorage.setItem('notifications', JSON.stringify(savedNotifications));
+                    }
+                }
+            });
+
+            // Загружаем ВСЕ непрочитанные уведомления из localStorage
+            savedNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            savedNotifications.forEach(notif => {
+                if (!notif.read) {
+                    // Проверяем, нет ли уже этого уведомления в массиве
+                    const exists = notifications.find(n => n.id === notif.id);
+                    if (!exists) {
+                        notifications.push(notif);
+                    }
+                }
+            });
+
+            // Сортируем по дате (новые сверху)
+            notifications.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateB - dateA;
+            });
+
+            if (notifications.length === 0) {
+                content.style.display = 'none';
+                empty.style.display = 'block';
+            } else {
+                content.style.display = 'block';
+                empty.style.display = 'none';
+
+                notifications.forEach(notif => {
+                    const notifItem = document.createElement('div');
+                    notifItem.className = `notification-item notification-${notif.type}`;
+                    notifItem.innerHTML = `
+                        <div class="notification-item-content">
+                            <div class="notification-item-title">${escapeHtml(notif.title || 'Уведомление')}</div>
+                            <div class="notification-item-message">${escapeHtml(notif.message || '')}</div>
+                            <div class="notification-item-date">${escapeHtml(notif.date || '')}</div>
+                        </div>
+                        <button class="notification-item-delete" onclick="deleteNotification('${notif.id}')">×</button>
+                    `;
+                    content.appendChild(notifItem);
+                });
+            }
+
+            // Обновляем счетчик
+            updateNotificationBadge(notifications.filter(n => !n.read).length);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function deleteNotification(id) {
+            let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            notifications = notifications.filter(n => n.id !== id);
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            loadNotifications();
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            const badgeSticky = document.getElementById('notificationBadgeSticky');
+            
+            if (count > 0) {
+                if (badge) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.style.display = 'block';
+                }
+                if (badgeSticky) {
+                    badgeSticky.textContent = count > 99 ? '99+' : count;
+                    badgeSticky.style.display = 'block';
+                }
+            } else {
+                if (badge) badge.style.display = 'none';
+                if (badgeSticky) badgeSticky.style.display = 'none';
+            }
+        }
+
+        // Проверяем уведомления при загрузке и каждую минуту
+        loadNotifications();
+        setInterval(loadNotifications, 60000);
+        
+        // Обновляем уведомления при изменении localStorage (например, при добавлении события в календаре)
+        window.addEventListener('storage', function(e) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            const calendarEventsKey = email ? `calendarEvents_${email}` : 'calendarEvents';
+            if (e.key === calendarEventsKey || e.key === 'notifications') {
+                loadNotifications();
+            }
+        });
+        
+        // Также обновляем при фокусе на окне (на случай, если календарь открыт в той же вкладке)
+        window.addEventListener('focus', function() {
+            loadNotifications();
+        });
+
+        // Обновление мини-календаря
+        function updateMiniCalendar() {
+            const now = new Date();
+            const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+            const weekdays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            
+            const monthEl = document.getElementById('miniCalendarMonth');
+            const yearEl = document.getElementById('miniCalendarYear');
+            const dayEl = document.getElementById('miniCalendarDay');
+            const weekdayEl = document.getElementById('miniCalendarWeekday');
+            
+            if (monthEl) monthEl.textContent = months[now.getMonth()];
+            if (yearEl) yearEl.textContent = now.getFullYear();
+            if (dayEl) dayEl.textContent = now.getDate();
+            if (weekdayEl) weekdayEl.textContent = weekdays[now.getDay()];
+        }
+        
+        // Обновляем мини-календарь при загрузке
+        updateMiniCalendar();
+        
+        // Плавная прокрутка к секциям при клике на пункты меню
+        document.querySelectorAll('.cabinet-nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                
+                if (targetSection) {
+                    const navHeight = document.querySelector('.cabinet-sticky-nav-wrapper').offsetHeight;
+                    const aiHeight = document.querySelector('.cabinet-sticky-ai-wrapper').offsetHeight;
+                    const offset = navHeight + aiHeight + 20; // Добавляем отступ
+                    
+                    const targetPosition = targetSection.offsetTop - offset;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Profile Modal Functions
+        function toggleProfileModal() {
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+                if (modal.style.display === 'flex') {
+                    updateProfileInfo();
+                }
+            }
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function updateProfileInfo() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const orgName = document.getElementById('profileOrgName');
+            const orgEmail = document.getElementById('profileEmail');
+            
+            if (orgName) orgName.textContent = currentUser.organization || 'Не указано';
+            if (orgEmail) orgEmail.textContent = currentUser.email || 'Не указано';
+        }
+
+
+
+        function toggleTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+            updateThemeToggle();
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.documentElement.classList.remove('dark-theme');
+            }
+        }
+
+        function updateThemeToggle() {
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            
+            if (themeToggle) {
+                themeToggle.textContent = currentTheme === 'light' ? 'Светлая' : 'Темная';
+            }
+            
+            // Update theme label
+            const themeMenuItems = document.querySelectorAll('.profile-menu-item');
+            themeMenuItems.forEach(item => {
+                const toggle = item.querySelector('#themeToggle');
+                if (toggle) {
+                    const themeText = item.querySelector('.profile-menu-text');
+                    if (themeText) {
+                        themeText.innerHTML = 'Тема: <span id="themeToggle">' + (currentTheme === 'light' ? 'Светлая' : 'Темная') + '</span>';
+                    }
+                }
+            });
+        }
+
+        function logout() {
+            showConfirmProfileModal('Вы уверены, что хотите выйти?', function() {
+                localStorage.removeItem('currentUser');
+                window.location.href = "{% url 'index' %}";
+            });
+        }
+
+        function openEditProfile() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.email === currentUser.email);
+            
+            if (user) {
+                document.getElementById('editOrganization').value = user.organization || '';
+                document.getElementById('editEmail').value = user.email || '';
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editConfirmPassword').value = '';
+            }
+            
+            document.getElementById('editProfileModal').style.display = 'flex';
+        }
+
+        function closeEditProfile() {
+            document.getElementById('editProfileModal').style.display = 'none';
+        }
+
+        function saveProfileChanges() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            const organization = document.getElementById('editOrganization').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const password = document.getElementById('editPassword').value;
+            const confirmPassword = document.getElementById('editConfirmPassword').value;
+            
+            if (!organization) {
+                showErrorModal('Наименование организации не может быть пустым');
+                return;
+            }
+            
+            if (!email) {
+                showErrorModal('Email не может быть пустым');
+                return;
+            }
+            
+            if (password && password !== confirmPassword) {
+                showErrorModal('Пароли не совпадают');
+                return;
+            }
+            
+            // Находим пользователя в списке
+            const userIndex = users.findIndex(u => u.email === currentUser.email);
+            
+            if (userIndex === -1) {
+                showErrorModal('Пользователь не найден');
+                return;
+            }
+            
+            // Проверяем, не занят ли новый email другим пользователем
+            if (email !== currentUser.email) {
+                const emailExists = users.find(u => u.email === email && u.email !== currentUser.email);
+                if (emailExists) {
+                    showErrorModal('Пользователь с таким email уже существует');
+                    return;
+                }
+            }
+            
+            // Показываем окно подтверждения поверх окна редактирования
+            showConfirmProfileModal('Вы уверены, что хотите сохранить изменения в профиле?', function() {
+                // Показываем индикатор загрузки
+                const editForm = document.querySelector('.edit-profile-form');
+                if (editForm && typeof showFormLoading === 'function') {
+                    showFormLoading(editForm);
+                } else if (typeof showLoading === 'function') {
+                    showLoading('Сохранение профиля...');
+                }
+                
+                try {
+                    // Обновляем данные пользователя
+                    users[userIndex].organization = organization;
+                    users[userIndex].email = email;
+                if (password) {
+                    users[userIndex].password = password;
+                }
+                
+                // Сохраняем обновленный список пользователей
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                // Обновляем текущего пользователя
+                const updatedUser = {
+                    organization: organization,
+                    email: email
+                };
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                
+                // Обновляем отображение в модальном окне профиля
+                updateProfileInfo();
+                
+                // Закрываем модальное окно подтверждения
+                closeConfirmProfileModal();
+                
+                // Закрываем модальное окно редактирования
+                closeEditProfile();
+                
+                showSuccessModal('Профиль успешно обновлен');
+                } catch (error) {
+                    if (typeof handleError === 'function') {
+                        handleError(error, { action: 'saveProfileChanges' });
+                    } else {
+                        console.error('Ошибка при сохранении профиля:', error);
+                        showErrorModal('Произошла ошибка при сохранении профиля');
+                    }
+                } finally {
+                    // Скрываем индикатор загрузки
+                    const editForm = document.querySelector('.edit-profile-form');
+                    if (editForm && typeof hideFormLoading === 'function') {
+                        hideFormLoading(editForm);
+                    } else if (typeof hideLoading === 'function') {
+                        hideLoading();
+                    }
+                }
+            });
+        }
+
+        function showErrorModal(message) {
+            const modal = document.getElementById('errorModal');
+            const messageEl = document.getElementById('errorMessage');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function showSuccessModal(message) {
+            const modal = document.getElementById('successModal');
+            const messageEl = document.getElementById('successMessage');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function showConfirmProfileModal(message, onConfirm) {
+            const modal = document.getElementById('confirmProfileModal');
+            const messageEl = document.getElementById('confirmProfileMessage');
+            const titleEl = document.querySelector('#confirmProfileModal .confirm-modal-title');
+            
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+            if (titleEl) {
+                titleEl.textContent = 'Подтверждение';
+            }
+            if (modal) {
+                modal.style.display = 'flex';
+                // Сохраняем callback для подтверждения
+                window.confirmProfileCallback = onConfirm;
+            }
+        }
+
+        function closeConfirmProfileModal() {
+            const modal = document.getElementById('confirmProfileModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            window.confirmProfileCallback = null;
+        }
+
+        function confirmProfileAction() {
+            if (window.confirmProfileCallback) {
+                window.confirmProfileCallback();
+            }
+        }
+
+        // Initialize theme on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            
+            applyTheme(savedTheme);
+            updateThemeToggle();
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const profileModal = document.getElementById('profileModal');
+            const editProfileModal = document.getElementById('editProfileModal');
+            const confirmProfileModal = document.getElementById('confirmProfileModal');
+            const errorModal = document.getElementById('errorModal');
+            const successModal = document.getElementById('successModal');
+            
+            // Не закрываем модальное окно, если клик был на кнопке внутри него
+            if (event.target.closest('.profile-menu-item')) {
+                return;
+            }
+            
+            // Не закрываем окно редактирования, если открыто окно подтверждения
+            if (event.target === editProfileModal && confirmProfileModal.style.display !== 'flex') {
+                closeEditProfile();
+            }
+            
+            if (event.target === profileModal) {
+                closeProfileModal();
+            }
+            
+            if (event.target === confirmProfileModal) {
+                closeConfirmProfileModal();
+            }
+            
+            if (event.target === errorModal) {
+                closeErrorModal();
+            }
+            
+            if (event.target === successModal) {
+                closeSuccessModal();
+            }
+        });
+    </script>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="profile-modal" style="display: none;">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <h3 class="profile-modal-title" data-i18n="profile-modal-title">Профиль</h3>
+                <button class="profile-modal-close" onclick="closeProfileModal()">←</button>
+            </div>
+            <div class="profile-modal-body">
+                <div class="profile-info">
+                    <div class="profile-org-name" id="profileOrgName" data-i18n="not-specified">Не указано</div>
+                    <div class="profile-email" id="profileEmail" data-i18n="not-specified">Не указано</div>
+                </div>
+                <div class="profile-menu">
+                    <button class="profile-menu-item" onclick="openEditProfile()">
+                        <span class="profile-menu-text" data-i18n="edit-profile">Редактировать профиль</span>
+                    </button>
+                    <button class="profile-menu-item" onclick="toggleTheme()">
+                        <span class="profile-menu-text"><span data-i18n="theme">Тема</span>: <span id="themeToggle">Светлая</span></span>
+                    </button>
+                    <button class="profile-menu-item profile-menu-item-logout" onclick="logout()">
+                        <span class="profile-menu-text" data-i18n="logout">Выйти</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="profile-modal" style="display: none;">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <h3 class="profile-modal-title" data-i18n="edit-profile-title">Редактировать профиль</h3>
+                <button class="profile-modal-close" onclick="closeEditProfile()">←</button>
+            </div>
+            <div class="profile-modal-body">
+                <form class="edit-profile-form" onsubmit="event.preventDefault(); saveProfileChanges();">
+                    <div class="edit-profile-group">
+                        <label class="edit-profile-label" data-i18n="org-name">Наименование организации</label>
+                        <input type="text" class="edit-profile-input" id="editOrganization" data-i18n-placeholder="org-name" placeholder="Наименование организации" required>
+                    </div>
+                    <div class="edit-profile-group">
+                        <label class="edit-profile-label" data-i18n="email">Электронная почта</label>
+                        <input type="email" class="edit-profile-input" id="editEmail" data-i18n-placeholder="email" placeholder="Электронная почта" required>
+                    </div>
+                    <div class="edit-profile-group">
+                        <label class="edit-profile-label" data-i18n="new-password">Новый пароль (оставьте пустым, чтобы не менять)</label>
+                        <input type="password" class="edit-profile-input" id="editPassword" data-i18n-placeholder="new-password" placeholder="Новый пароль">
+                    </div>
+                    <div class="edit-profile-group">
+                        <label class="edit-profile-label" data-i18n="confirm-password">Подтвердите новый пароль</label>
+                        <input type="password" class="edit-profile-input" id="editConfirmPassword" data-i18n-placeholder="confirm-password" placeholder="Подтвердите новый пароль">
+                    </div>
+                    <div class="edit-profile-actions">
+                        <button type="button" class="edit-profile-btn edit-profile-btn-cancel" onclick="closeEditProfile()" data-i18n="cancel">Отмена</button>
+                        <button type="submit" class="edit-profile-btn edit-profile-btn-save" data-i18n="save">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Profile Changes Modal -->
+    <div id="confirmProfileModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title" data-i18n="confirm-title">Подтверждение</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="confirmProfileMessage">Вы уверены, что хотите сохранить изменения в профиле?</p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmProfileModal()" data-i18n="cancel">Отмена</button>
+                <button class="confirm-btn confirm-btn-confirm" onclick="confirmProfileAction()" data-i18n="confirm">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title" data-i18n="error-title">Ошибка</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="errorMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-confirm" onclick="closeErrorModal()" style="width: 100%;" data-i18n="ok">ОК</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="confirm-modal" style="display: none; z-index: 4000;">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <h3 class="confirm-modal-title" data-i18n="success-title">Успешно</h3>
+            </div>
+            <div class="confirm-modal-body">
+                <p class="confirm-message" id="successMessage"></p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-btn-confirm" onclick="closeSuccessModal()" style="width: 100%;" data-i18n="ok">ОК</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" class="scroll-to-top-btn" onclick="scrollToTop()" title="Наверх">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
+
+    <!-- AI Helper Info Button -->
+    <div class="ai-helper-info">
+        <button class="ai-helper-info-btn" title="Возможности AI-помощника">
+            <span class="ai-helper-info-icon"><img src="{% static 'images/light2.png' %}" alt="Возможности AI-помощника" style="width: 24px; height: 24px;" loading="lazy"></span>
+        </button>
+        <div class="ai-helper-info-content">
+            <h3 class="ai-helper-info-title">Возможности AI-помощника</h3>
+            <div class="ai-helper-info-list">
+                <div class="ai-helper-info-section">
+                    <h4 class="ai-helper-info-section-title">Анализ данных</h4>
+                    <ul class="ai-helper-info-items">
+                        <li>Чеки и финансовые операции</li>
+                        <li>Инвентаризация и склад</li>
+                        <li>Сотрудники и зарплаты</li>
+                        <li>Календарь событий</li>
+                        <li>Налоги и коммунальные услуги</li>
+                        <li>Документы (PDF, DOCX, XLSX, изображения)</li>
+                        <li>Балансы счетов</li>
+                    </ul>
+                </div>
+                <div class="ai-helper-info-section">
+                    <h4 class="ai-helper-info-section-title">Выполнение действий</h4>
+                    <ul class="ai-helper-info-items">
+                        <li>Создание и редактирование событий в календаре</li>
+                        <li>Управление документами</li>
+                        <li>Отправка сообщений в поддержку</li>
+                        <li>Анализ загруженных файлов</li>
+                    </ul>
+                </div>
+                <div class="ai-helper-info-section">
+                    <h4 class="ai-helper-info-section-title">Ответы на вопросы</h4>
+                    <ul class="ai-helper-info-items">
+                        <li>Деловой стиль общения</li>
+                        <li>Создание таблиц и отчетов</li>
+                        <li>Анализ и рекомендации</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Показываем/скрываем кнопку при прокрутке
+        window.addEventListener('scroll', function() {
+            const scrollBtn = document.getElementById('scrollToTopBtn');
+            if (window.pageYOffset > 300) {
+                scrollBtn.style.display = 'flex';
+            } else {
+                scrollBtn.style.display = 'none';
+            }
+        });
+
+        // Функция прокрутки наверх
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Функция перехода в чат с автоматическим действием
+        function goToChatWithAction(action) {
+            // Формируем URL с параметром action
+            const chatUrl = "{% url 'chat' %}?action=" + action;
+            
+            // Переходим на страницу чата
+            window.location.href = chatUrl;
+        }
+
+        // Функции смены темы для верхней шапки
+        function toggleIndexTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            localStorage.setItem('theme', newTheme);
+            applyIndexTheme(newTheme);
+            updateIndexThemeIcon(newTheme);
+        }
+
+        function applyIndexTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.documentElement.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.documentElement.classList.remove('dark-theme');
+            }
+        }
+
+        function updateIndexThemeIcon(theme) {
+            const themeIcon = document.getElementById('indexThemeIcon');
+            if (!themeIcon) return;
+            
+            // SVG для светлой темы (солнце)
+            const lightIcon = `<path d="M12 3V1M12 23V21M21 12H23M1 12H3M18.364 18.364L19.778 19.778M4.222 4.222L5.636 5.636M18.364 5.636L19.778 4.222M4.222 19.778L5.636 18.364M12 18C15.314 18 18 15.314 18 12C18 8.686 15.314 6 12 6C8.686 6 6 8.686 6 12C6 15.314 8.686 18 12 18Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`;
+            
+            // SVG для темной темы (луна)
+            const darkIcon = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+            
+            themeIcon.innerHTML = theme === 'dark' ? darkIcon : lightIcon;
+        }
+
+        // Проверка авторизации пользователя
+        function isUserAuthenticated() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return false;
+            try {
+                const user = JSON.parse(currentUser);
+                return user && user.email;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Обработка клика на кнопку ИИ-Чат
+        function handleChatClick(event) {
+            event.preventDefault();
+            
+            if (isUserAuthenticated()) {
+                // Пользователь авторизован - переходим в чат
+                window.location.href = "{% url 'chat' %}";
+            } else {
+                // Пользователь не авторизован - показываем модальное окно
+                document.getElementById('loginRequiredModal').style.display = 'flex';
+            }
+        }
+
+        // Обработка клика на кнопку Личный кабинет
+        function handleCabinetClick(event) {
+            event.preventDefault();
+            
+            if (isUserAuthenticated()) {
+                // Пользователь авторизован - переходим в кабинет
+                window.location.href = "{% url 'cabinet' %}";
+            } else {
+                // Пользователь не авторизован - показываем модальное окно регистрации
+                document.getElementById('loginRequiredModal').style.display = 'flex';
+            }
+        }
+
+        // Обработка клика на кнопку авторизации/профиля
+        function handleAuthButtonClick(event) {
+            event.preventDefault();
+            
+            if (isUserAuthenticated()) {
+                // Показываем модальное окно профиля
+                showProfileModal();
+            } else {
+                // Переходим на страницу входа
+                window.location.href = "{% url 'login' %}";
+            }
+        }
+
+        // Обновление вида кнопки авторизации
+        function updateAuthButton() {
+            const authBtn = document.getElementById('indexAuthBtn');
+            if (!authBtn) return;
+            
+            if (isUserAuthenticated()) {
+                authBtn.textContent = 'Профиль';
+                authBtn.classList.add('index-profile-btn');
+            } else {
+                authBtn.textContent = 'Войти / Регистрация';
+                authBtn.classList.remove('index-profile-btn');
+            }
+        }
+
+        // Показать модальное окно профиля
+        function showProfileModal() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const modal = document.getElementById('indexProfileModal');
+            
+            // Заполняем данные профиля
+            document.getElementById('indexProfileName').textContent = currentUser.organization || 'Не указано';
+            document.getElementById('indexProfileEmail').textContent = currentUser.email || 'Не указано';
+            
+            modal.style.display = 'flex';
+        }
+
+        // Редактирование профиля
+        function editProfile() {
+            closeProfileModal();
+            window.location.href = "{% url 'cabinet' %}";
+        }
+
+        // Закрыть модальное окно профиля
+        function closeProfileModal() {
+            const modal = document.getElementById('indexProfileModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Закрыть модальное окно авторизации
+        function closeLoginRequiredModal() {
+            const modal = document.getElementById('loginRequiredModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Переход на страницу входа из модального окна
+        function goToLogin() {
+            window.location.href = "{% url 'login' %}";
+        }
+
+        // Выход из аккаунта
+        function logout() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                localStorage.removeItem('currentUser');
+                updateAuthButton();
+                closeProfileModal();
+                // Обновляем страницу для применения изменений
+                window.location.reload();
+            }
+        }
+
+        // Закрытие модальных окон по клику вне их
+        window.addEventListener('click', function(event) {
+            const profileModal = document.getElementById('indexProfileModal');
+            const loginModal = document.getElementById('loginRequiredModal');
+            
+            if (event.target === profileModal) {
+                closeProfileModal();
+            }
+            if (event.target === loginModal) {
+                closeLoginRequiredModal();
+            }
+        });
+
+        // Применение сохраненной темы при загрузке
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyIndexTheme(savedTheme);
+            updateIndexThemeIcon(savedTheme);
+            
+            // Обновление кнопки авторизации при загрузке
+            updateAuthButton();
+        });
+    </script>
+
+    <!-- Modal: Требуется авторизация -->
+    <div class="index-modal" id="loginRequiredModal" style="display: none;">
+        <div class="index-modal-content">
+            <div class="index-modal-header">
+                <h2 class="index-modal-title">Требуется авторизация</h2>
+                <button class="index-modal-close" onclick="closeLoginRequiredModal()">×</button>
+            </div>
+            <div class="index-modal-body">
+                <p class="index-modal-text">Для использования ИИ-чата необходимо войти в аккаунт или зарегистрироваться.</p>
+            </div>
+            <div class="index-modal-footer">
+                <button class="index-modal-btn index-modal-btn-secondary" onclick="closeLoginRequiredModal()">Отмена</button>
+                <button class="index-modal-btn index-modal-btn-primary" onclick="goToLogin()">Войти / Регистрация</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Профиль пользователя -->
+    <div class="index-modal" id="indexProfileModal" style="display: none;">
+        <div class="index-profile-modal-content">
+            <div class="index-profile-header">
+                <h2 class="index-profile-title">Профиль</h2>
+                <button class="index-profile-back-btn" onclick="closeProfileModal()" title="Закрыть">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="#ff3333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="index-profile-body">
+                <div class="index-profile-info-block">
+                    <div class="index-profile-name" id="indexProfileName">Не указано</div>
+                    <div class="index-profile-email" id="indexProfileEmail">Не указано</div>
+                </div>
+                <div class="index-profile-actions">
+                    <button class="index-profile-action-btn" onclick="editProfile()">
+                        <span>Редактировать профиль</span>
+                    </button>
+                    <button class="index-profile-action-btn index-profile-action-btn-logout" onclick="logout()">
+                        <span>Выйти</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
