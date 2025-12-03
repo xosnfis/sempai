@@ -32,7 +32,9 @@ if DEBUG:
     mimetypes.add_type("text/css", ".css", True)
     mimetypes.add_type("application/javascript", ".js", True)
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS из переменной окружения или значение по умолчанию
+ALLOWED_HOSTS_STR = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',') if host.strip()]
 
 
 # Application definition
