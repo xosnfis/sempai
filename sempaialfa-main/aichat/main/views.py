@@ -216,71 +216,92 @@ def scenarios(request):
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def check_lm_studio_connection(request):
-    """API endpoint для проверки подключения к Ollama"""
+    """API endpoint для проверки подключения к OpenRouter"""
     try:
-        OLLAMA_URL = getattr(settings, 'OLLAMA_URL', getattr(settings, 'LM_STUDIO_URL', 'http://host.docker.internal:9117/v1/chat/completions'))
+        OPENROUTER_API_KEY = getattr(settings, 'OPENROUTER_API_KEY', '')
+        OPENROUTER_URL = getattr(settings, 'OPENROUTER_URL', 'https://openrouter.ai/api/v1/chat/completions')
+        OPENROUTER_MODEL = getattr(settings, 'OPENROUTER_MODEL', 'deepseek/deepseek-r1')
         
-        # Извлекаем базовый URL для проверки
-        base_url = OLLAMA_URL.rsplit('/v1/', 1)[0]
-        
-        try:
-            # Проверяем, отвечает ли сервер Ollama
-            server_response = requests.get(base_url, timeout=5)
-            server_available = True
-        except:
-            server_available = False
+        if not OPENROUTER_API_KEY:
+            return JsonResponse({
+                'success': False,
+                'server_available': False,
+                'api_available': False,
+                'model_available': False,
+                'url': OPENROUTER_URL,
+                'error': 'API ключ OpenRouter не настроен. Установите переменную окружения OPENROUTER_API_KEY.',
+                'recommendations': [
+                    'Проверьте, что в файле .env установлен OPENROUTER_API_KEY',
+                    'Получите API ключ на https://openrouter.ai/keys',
+                    'Убедитесь, что переменная окружения правильно экспортирована'
+                ]
+            })
         
         # Проверяем API, отправляя тестовый запрос
         api_available = False
         model_available = False
         error_details = None
         
-        if server_available:
-            try:
-                test_payload = {
-                    "model": "deepseek-r1",
-                    "messages": [{"role": "user", "content": "test"}],
-                    "max_tokens": 1
-                }
-                api_response = requests.post(OLLAMA_URL, json=test_payload, timeout=10)
-                
-                if api_response.status_code == 200:
-                    api_available = True
-                    model_available = True
-                elif api_response.status_code == 404:
-                    api_available = True
-                    model_available = False
-                    error_details = "Модель 'deepseek-r1' не найдена"
-                else:
-                    api_available = True
-                    try:
-                        error_data = api_response.json()
+        try:
+            headers = {
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": request.build_absolute_uri('/') if hasattr(request, 'build_absolute_uri') else "https://localhost",
+            }
+            
+            test_payload = {
+                "model": OPENROUTER_MODEL,
+                "messages": [{"role": "user", "content": "test"}],
+                "max_tokens": 1
+            }
+            
+            api_response = requests.post(OPENROUTER_URL, headers=headers, json=test_payload, timeout=10)
+            
+            if api_response.status_code == 200:
+                api_available = True
+                model_available = True
+            elif api_response.status_code == 401:
+                api_available = True
+                model_available = False
+                error_details = "Неверный API ключ. Проверьте правильность OPENROUTER_API_KEY."
+            elif api_response.status_code == 404:
+                api_available = True
+                model_available = False
+                error_details = f"Модель '{OPENROUTER_MODEL}' не найдена. Проверьте название модели на https://openrouter.ai/models"
+            else:
+                api_available = True
+                try:
+                    error_data = api_response.json()
+                    error_message = error_data.get('error', {}).get('message', '') if isinstance(error_data.get('error'), dict) else str(error_data.get('error', ''))
+                    if error_message:
+                        error_details = f"Статус {api_response.status_code}: {error_message}"
+                    else:
                         error_details = f"Статус {api_response.status_code}: {error_data}"
-                    except:
-                        error_details = f"Статус {api_response.status_code}"
-            except requests.exceptions.ConnectionError:
-                api_available = False
-                error_details = "Не удалось подключиться к API endpoint"
-            except requests.exceptions.Timeout:
-                api_available = False
-                error_details = "Превышено время ожидания"
-            except Exception as e:
-                api_available = False
-                error_details = str(e)
+                except:
+                    error_details = f"Статус {api_response.status_code}: {api_response.text[:200]}"
+        except requests.exceptions.ConnectionError:
+            api_available = False
+            error_details = "Не удалось подключиться к OpenRouter API. Проверьте интернет-соединение."
+        except requests.exceptions.Timeout:
+            api_available = False
+            error_details = "Превышено время ожидания ответа от OpenRouter"
+        except Exception as e:
+            api_available = False
+            error_details = str(e)
         
         return JsonResponse({
-            'success': server_available and api_available and model_available,
-            'server_available': server_available,
+            'success': api_available and model_available,
+            'server_available': True,  # OpenRouter всегда доступен (облачный сервис)
             'api_available': api_available,
             'model_available': model_available,
-            'url': OLLAMA_URL,
+            'url': OPENROUTER_URL,
             'error': error_details,
-            'recommendations': [] if (server_available and api_available and model_available) else [
-                'Убедитесь, что Ollama запущен',
-                'Проверьте, что сервер активен (запустите: ollama serve)',
-                'Проверьте, что модель deepseek-r1 загружена (запустите: ollama pull deepseek-r1)',
-                'Проверьте, что порт 9117 не занят другим приложением',
-                'Проверьте настройки Ollama (по умолчанию работает на http://localhost:9117)'
+            'recommendations': [] if (api_available and model_available) else [
+                'Проверьте, что API ключ OpenRouter установлен в переменной окружения OPENROUTER_API_KEY',
+                'Получите API ключ на https://openrouter.ai/keys',
+                f'Проверьте, что модель {OPENROUTER_MODEL} доступна на https://openrouter.ai/models',
+                'Убедитесь, что у вас есть активное интернет-соединение',
+                'Проверьте, что на вашем аккаунте OpenRouter достаточно баланса'
             ]
         })
     except Exception as e:
@@ -917,8 +938,16 @@ def process_chat_request_async(request_id):
         if not moderation_result['allowed']:
             message_blocked = True
         
-        # Настройки Ollama
-        OLLAMA_URL = getattr(settings, 'OLLAMA_URL', getattr(settings, 'LM_STUDIO_URL', 'http://host.docker.internal:9117/v1/chat/completions'))
+        # Настройки OpenRouter
+        OPENROUTER_API_KEY = getattr(settings, 'OPENROUTER_API_KEY', '')
+        OPENROUTER_URL = getattr(settings, 'OPENROUTER_URL', 'https://openrouter.ai/api/v1/chat/completions')
+        OPENROUTER_MODEL = getattr(settings, 'OPENROUTER_MODEL', 'deepseek/deepseek-r1')
+        
+        if not OPENROUTER_API_KEY:
+            chat_request.status = ChatRequest.STATUS_FAILED
+            chat_request.error = 'API ключ OpenRouter не настроен. Установите переменную окружения OPENROUTER_API_KEY.'
+            chat_request.save()
+            return
         
         # Формируем историю сообщений для модели
         messages = []
@@ -1163,27 +1192,34 @@ def process_chat_request_async(request_id):
         
         # Подготавливаем payload для запроса
         payload = {
-            "model": "deepseek-r1",
+            "model": OPENROUTER_MODEL,
             "messages": messages,
-            "temperature": 0.5,  # Уменьшено для более быстрых и точных ответов
-            "max_tokens": 1200,  # Уменьшено для ускорения генерации
-            "top_p": 0.9,  # Параметр для ускорения
-            "frequency_penalty": 0.1,  # Снижает повторения
+            "temperature": 0.5,
+            "max_tokens": 1200,
+            "top_p": 0.9,
+            "frequency_penalty": 0.1,
             "stream": False
         }
         
-        logger.debug(f"Отправка запроса в Ollama: model={payload['model']}, messages_count={len(messages)}")
+        # Заголовки для OpenRouter
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://localhost",
+        }
+        
+        logger.debug(f"Отправка запроса в OpenRouter: model={payload['model']}, messages_count={len(messages)}")
         
         # Отслеживание времени начала LLM обработки
         llm_start_time = timezone.now()
         
-        # Отправляем запрос в Ollama
+        # Отправляем запрос в OpenRouter
         try:
-            response = requests.post(OLLAMA_URL, json=payload, timeout=90)  # Уменьшено с 120 до 90 секунд
+            response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=90)
         except requests.exceptions.RequestException as e:
-            logger.error(f"Ошибка при отправке запроса в Ollama: {str(e)}")
+            logger.error(f"Ошибка при отправке запроса в OpenRouter: {str(e)}")
             chat_request.status = ChatRequest.STATUS_FAILED
-            chat_request.error = f'Ошибка подключения к Ollama: {str(e)}'
+            chat_request.error = f'Ошибка подключения к OpenRouter: {str(e)}'
             chat_request.save()
             return
         
@@ -1897,22 +1933,22 @@ def process_chat_request_async(request_id):
                 logger.error(f"Ошибка при сохранении истории чата: {str(e)}", exc_info=True)
             
         else:
-            # Ошибка от Ollama
-            error_details = f'Ошибка Ollama: {response.status_code}'
+            # Ошибка от OpenRouter
+            error_details = f'Ошибка OpenRouter: {response.status_code}'
             try:
                 error_data = response.json()
                 if isinstance(error_data, dict):
                     error_message = error_data.get('error', {}).get('message', '') if isinstance(error_data.get('error'), dict) else str(error_data.get('error', ''))
                     if error_message:
-                        error_details = f'Ошибка Ollama ({response.status_code}): {error_message}'
+                        error_details = f'Ошибка OpenRouter ({response.status_code}): {error_message}'
                     else:
-                        error_details = f'Ошибка Ollama ({response.status_code}): {json.dumps(error_data, ensure_ascii=False)}'
+                        error_details = f'Ошибка OpenRouter ({response.status_code}): {json.dumps(error_data, ensure_ascii=False)}'
                 else:
-                    error_details = f'Ошибка Ollama ({response.status_code}): {str(error_data)}'
+                    error_details = f'Ошибка OpenRouter ({response.status_code}): {str(error_data)}'
             except:
-                error_details = f'Ошибка Ollama ({response.status_code}): {response.text[:500]}'
+                error_details = f'Ошибка OpenRouter ({response.status_code}): {response.text[:500]}'
             
-            logger.error(f"Ошибка от Ollama: {error_details}")
+            logger.error(f"Ошибка от OpenRouter: {error_details}")
             
             # Если ошибка 400, пробуем без изображений
             if response.status_code == 400 and image_files:
@@ -1939,7 +1975,7 @@ def process_chat_request_async(request_id):
                     
                     text_payload = {**payload, "messages": text_only_messages}
                     try:
-                        text_response = requests.post(OLLAMA_URL, json=text_payload, timeout=90)  # Уменьшено для ускорения
+                        text_response = requests.post(OPENROUTER_URL, headers=headers, json=text_payload, timeout=90)
                         if text_response.status_code == 200:
                             result = text_response.json()
                             ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
@@ -1996,8 +2032,8 @@ def process_chat_request_async(request_id):
     except ChatRequest.DoesNotExist:
         logger.error(f"ChatRequest {request_id} не найден")
     except requests.exceptions.ConnectionError as e:
-        error_msg = f'Не удалось подключиться к Ollama. Проверьте, что Ollama запущен и модель загружена.'
-        logger.error(f"Ошибка подключения к Ollama: {str(e)}")
+        error_msg = f'Не удалось подключиться к OpenRouter. Проверьте интернет-соединение и настройки API ключа.'
+        logger.error(f"Ошибка подключения к OpenRouter: {str(e)}")
         try:
             chat_request = ChatRequest.objects.get(id=request_id)
             chat_request.status = ChatRequest.STATUS_FAILED
@@ -2006,7 +2042,7 @@ def process_chat_request_async(request_id):
         except:
             pass
     except requests.exceptions.Timeout:
-        error_msg = 'Превышено время ожидания ответа от Ollama (90 сек).'
+        error_msg = 'Превышено время ожидания ответа от OpenRouter (90 сек).'
         logger.error(error_msg)
         try:
             chat_request = ChatRequest.objects.get(id=request_id)
@@ -2029,7 +2065,7 @@ def process_chat_request_async(request_id):
 @csrf_exempt
 @require_http_methods(["POST"])
 def chat_api(request):
-    """API endpoint для обработки сообщений чата через Ollama (асинхронно)"""
+    """API endpoint для обработки сообщений чата через OpenRouter (асинхронно)"""
     try:
         # Проверяем размер запроса
         content_length = request.META.get('CONTENT_LENGTH', 0)
@@ -3264,15 +3300,33 @@ def chat_status(request, request_id):
                     "content": system_prompt
                 })
         
+        # Настройки OpenRouter
+        OPENROUTER_API_KEY = getattr(settings, 'OPENROUTER_API_KEY', '')
+        OPENROUTER_URL = getattr(settings, 'OPENROUTER_URL', 'https://openrouter.ai/api/v1/chat/completions')
+        OPENROUTER_MODEL = getattr(settings, 'OPENROUTER_MODEL', 'deepseek/deepseek-r1')
+        
+        if not OPENROUTER_API_KEY:
+            return JsonResponse({
+                'success': False,
+                'error': 'API ключ OpenRouter не настроен. Установите переменную окружения OPENROUTER_API_KEY.'
+            }, status=500)
+        
         # Подготавливаем payload для запроса
         payload = {
-            "model": "deepseek-r1",  # Имя модели в Ollama
+            "model": OPENROUTER_MODEL,
             "messages": messages,
-            "temperature": 0.5,  # Уменьшено для ускорения
-            "max_tokens": 1200,  # Уменьшено для ускорения генерации
+            "temperature": 0.5,
+            "max_tokens": 1200,
             "top_p": 0.9,
             "frequency_penalty": 0.1,
             "stream": False
+        }
+        
+        # Заголовки для OpenRouter
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": request.build_absolute_uri('/') if hasattr(request, 'build_absolute_uri') else "https://localhost",
         }
         
         # Логируем запрос для отладки (без полных данных изображений)
@@ -3288,17 +3342,18 @@ def chat_status(request, request_id):
                 debug_messages.append({**msg, 'content': debug_content})
             else:
                 debug_messages.append(msg)
-        logger.debug(f"Отправка запроса в Ollama: model={payload['model']}, messages_count={len(messages)}")
+        logger.debug(f"Отправка запроса в OpenRouter: model={payload['model']}, messages_count={len(messages)}")
         
-        # Отправляем запрос в Ollama
+        # Отправляем запрос в OpenRouter
         try:
             response = requests.post(
-                OLLAMA_URL,
+                OPENROUTER_URL,
+                headers=headers,
                 json=payload,
-                timeout=90  # Оптимизировано для ускорения
+                timeout=90
             )
         except requests.exceptions.RequestException as e:
-            logger.error(f"Ошибка при отправке запроса в Ollama: {str(e)}")
+            logger.error(f"Ошибка при отправке запроса в OpenRouter: {str(e)}")
             raise
         
         if response.status_code == 200:
@@ -3521,22 +3576,22 @@ def chat_status(request, request_id):
                 'action': action_result
             })
         else:
-            # Ошибка от Ollama - получаем детали
-            error_details = f'Ошибка Ollama: {response.status_code}'
+            # Ошибка от OpenRouter - получаем детали
+            error_details = f'Ошибка OpenRouter: {response.status_code}'
             try:
                 error_data = response.json()
                 if isinstance(error_data, dict):
                     error_message = error_data.get('error', {}).get('message', '') if isinstance(error_data.get('error'), dict) else str(error_data.get('error', ''))
                     if error_message:
-                        error_details = f'Ошибка Ollama ({response.status_code}): {error_message}'
+                        error_details = f'Ошибка OpenRouter ({response.status_code}): {error_message}'
                     else:
-                        error_details = f'Ошибка Ollama ({response.status_code}): {json.dumps(error_data, ensure_ascii=False)}'
+                        error_details = f'Ошибка OpenRouter ({response.status_code}): {json.dumps(error_data, ensure_ascii=False)}'
                 else:
-                    error_details = f'Ошибка Ollama ({response.status_code}): {str(error_data)}'
+                    error_details = f'Ошибка OpenRouter ({response.status_code}): {str(error_data)}'
             except:
-                error_details = f'Ошибка Ollama ({response.status_code}): {response.text[:500]}'
+                error_details = f'Ошибка OpenRouter ({response.status_code}): {response.text[:500]}'
             
-            logger.error(f"Ошибка от Ollama: {error_details}")
+            logger.error(f"Ошибка от OpenRouter: {error_details}")
             
             # Если это ошибка 400, проверяем причину
             if response.status_code == 400:
@@ -3582,7 +3637,7 @@ def chat_status(request, request_id):
                                 "content": system_prompt
                             })
                         text_payload = {**payload, "messages": text_only_messages}
-                        text_response = requests.post(OLLAMA_URL, json=text_payload, timeout=90)  # Уменьшено для ускорения
+                        text_response = requests.post(OPENROUTER_URL, headers=headers, json=text_payload, timeout=90)
                         if text_response.status_code == 200:
                             result = text_response.json()
                             ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '')
@@ -3609,12 +3664,12 @@ def chat_status(request, request_id):
             }, status=response.status_code if response.status_code < 500 else 500)
             
     except requests.exceptions.ConnectionError as e:
-        error_msg = f'Не удалось подключиться к Ollama ({OLLAMA_URL}). '
+        error_msg = f'Не удалось подключиться к OpenRouter ({OPENROUTER_URL}). '
         error_msg += 'Проверьте:\n'
-        error_msg += '1. Ollama запущен (запустите: ollama serve)\n'
-        error_msg += '2. Модель загружена (запустите: ollama pull deepseek-r1)\n'
-        error_msg += '3. Порт 9117 не занят другим приложением\n'
-        error_msg += f'4. URL в настройках правильный (текущий: {OLLAMA_URL})'
+        error_msg += '1. API ключ OpenRouter установлен в переменной окружения OPENROUTER_API_KEY\n'
+        error_msg += '2. Интернет-соединение активно\n'
+        error_msg += f'3. Модель доступна: {OPENROUTER_MODEL}\n'
+        error_msg += '4. На вашем аккаунте OpenRouter достаточно баланса'
         return JsonResponse({
             'success': False,
             'error': error_msg,
@@ -3623,13 +3678,13 @@ def chat_status(request, request_id):
     except requests.exceptions.Timeout:
         return JsonResponse({
             'success': False,
-            'error': 'Превышено время ожидания ответа от Ollama (120 сек). Модель может быть слишком медленной или перегруженной.'
+            'error': 'Превышено время ожидания ответа от OpenRouter (120 сек). Модель может быть слишком медленной или перегруженной.'
         }, status=504)
     except requests.exceptions.RequestException as e:
         return JsonResponse({
             'success': False,
-            'error': f'Ошибка запроса к Ollama: {str(e)}',
-            'url': OLLAMA_URL
+            'error': f'Ошибка запроса к OpenRouter: {str(e)}',
+            'url': OPENROUTER_URL
         }, status=503)
     except ValueError as e:
         # Ошибка парсинга JSON (возможно, слишком большой запрос)

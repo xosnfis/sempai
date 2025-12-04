@@ -191,10 +191,14 @@ CACHES = {
     }
 }
 
-# Ollama настройки
-OLLAMA_URL = 'http://host.docker.internal:9117/v1/chat/completions'  # URL Ollama API (OpenAI-совместимый endpoint)
-# Для обратной совместимости
-LM_STUDIO_URL = OLLAMA_URL
+# OpenRouter настройки (замена Ollama)
+OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')  # API ключ OpenRouter
+OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'  # URL OpenRouter API
+OPENROUTER_MODEL = os.environ.get('OPENROUTER_MODEL', 'deepseek/deepseek-r1')  # Модель по умолчанию
+
+# Для обратной совместимости (deprecated - используйте OPENROUTER_API_KEY)
+OLLAMA_URL = OPENROUTER_URL  # Устаревшая переменная, оставлена для совместимости
+LM_STUDIO_URL = OPENROUTER_URL  # Устаревшая переменная, оставлена для совместимости
 
 # Настройки для загрузки больших файлов
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB - максимальный размер данных в памяти

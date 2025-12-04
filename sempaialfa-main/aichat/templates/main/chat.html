@@ -72,7 +72,9 @@
             </div>
             
             <div class="chat-sidebar-footer">
-                <button class="chat-profile-btn" id="chatThemeBtn" onclick="toggleChatTheme()">
+                <button class="chat-profile-btn chat-theme-btn" id="chatThemeBtn" onclick="toggleChatTheme()">
+                    <img src="{% static 'images/sv_tema.svg' %}" alt="Тема" class="chat-profile-icon chat-theme-icon-light" id="chatThemeIconLight" loading="lazy" style="display: none;">
+                    <img src="{% static 'images/tem_tema.svg' %}" alt="Тема" class="chat-profile-icon chat-theme-icon-dark" id="chatThemeIconDark" loading="lazy">
                     <span class="chat-profile-text" id="chatThemeBtnText">Тема</span>
                 </button>
                 <button class="chat-profile-btn chat-export-btn" id="chatExportBtn" onclick="showExportChatModal()" style="display: none;">
@@ -3018,7 +3020,7 @@
                     if (!lastMessage.isUser) {
                         const errorMessage = typeof handleError === 'function' 
                             ? handleError(error, {}, { silent: true }).userMessage
-                            : 'Ошибка подключения к AI. Убедитесь, что Ollama запущен.';
+                            : 'Ошибка подключения к AI. Проверьте настройки OpenRouter API ключа.';
                         lastMessage.text = errorMessage;
                         lastMessage.timestamp = new Date().toISOString();
                         saveChats();
@@ -4497,16 +4499,35 @@
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             localStorage.setItem('theme', newTheme);
             applyTheme(newTheme);
-            updateThemeButtonText();
+            // Небольшая задержка для применения CSS классов body перед обновлением иконок
+            setTimeout(() => {
+                updateThemeButtonText();
+            }, 50);
         }
 
-        // Обновление текста кнопки темы
+        // Обновление текста кнопки темы и иконок
         function updateThemeButtonText() {
             const theme = localStorage.getItem('theme') || 'light';
             const themeBtnText = document.getElementById('chatThemeBtnText');
+            const themeIconLight = document.getElementById('chatThemeIconLight');
+            const themeIconDark = document.getElementById('chatThemeIconDark');
             
             if (themeBtnText) {
                 themeBtnText.textContent = theme === 'dark' ? 'Темная' : 'Светлая';
+            }
+            
+            // Переключаем иконки в зависимости от темы
+            // Используем !important для переопределения CSS правил свернутой панели
+            if (themeIconLight && themeIconDark) {
+                if (theme === 'dark') {
+                    // В темной теме показываем иконку луны (темная тема)
+                    themeIconLight.style.setProperty('display', 'none', 'important');
+                    themeIconDark.style.setProperty('display', 'block', 'important');
+                } else {
+                    // В светлой теме показываем иконку солнца (светлая тема)
+                    themeIconLight.style.setProperty('display', 'block', 'important');
+                    themeIconDark.style.setProperty('display', 'none', 'important');
+                }
             }
         }
 

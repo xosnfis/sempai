@@ -2188,10 +2188,19 @@ ul {
     transform: translateY(-1px);
 }
 
-.chat-profile-icon {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
+/* Иконки темы - в развернутом виде показываем только одну, соответствующую текущей теме */
+.chat-theme-btn .chat-theme-icon-light,
+.chat-theme-btn .chat-theme-icon-dark {
+    display: none;
+}
+
+/* В темной теме показываем иконку луны (темная тема) */
+.dark-theme .chat-theme-btn .chat-theme-icon-dark {
+    display: block;
+}
+
+/* В светлой теме показываем иконку солнца (светлая тема) */
+body:not(.dark-theme) .chat-theme-btn .chat-theme-icon-light {
     display: block;
 }
 
@@ -2460,19 +2469,60 @@ ul {
     display: none;
 }
 
-.chat-sidebar.chat-sidebar-collapsed .chat-profile-btn::before {
-    content: '🌙';
-    font-size: 24px;
+/* Скрываем иконки в развернутом виде и показываем в свернутом */
+.chat-sidebar.chat-sidebar-collapsed .chat-profile-icon {
+    display: block !important;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
 
-.chat-sidebar.chat-sidebar-collapsed .chat-export-btn::before {
-    content: '📥';
-    font-size: 24px;
+/* Для кнопки темы при сворачивании показываем соответствующую иконку в зависимости от темы */
+/* В темной теме при свернутой панели показываем луну */
+body.dark-theme .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat-theme-icon-dark {
+    display: block !important;
 }
 
+body.dark-theme .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat-theme-icon-light {
+    display: none !important;
+}
+
+/* В светлой теме при свернутой панели показываем солнце */
+body:not(.dark-theme) .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat-theme-icon-light {
+    display: block !important;
+}
+
+body:not(.dark-theme) .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat-theme-icon-dark {
+    display: none !important;
+}
+
+.chat-sidebar.chat-sidebar-collapsed .chat-export-btn .chat-profile-icon {
+    display: block !important;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.chat-sidebar.chat-sidebar-collapsed .chat-suggestions-sidebar-btn .chat-profile-icon {
+    display: block !important;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* Убираем псевдоэлементы ::before с эмодзи при сворачивании */
+.chat-sidebar.chat-sidebar-collapsed .chat-profile-btn::before,
+.chat-sidebar.chat-sidebar-collapsed .chat-export-btn::before,
 .chat-sidebar.chat-sidebar-collapsed .chat-suggestions-sidebar-btn::before {
-    content: '💡';
-    font-size: 24px;
+    content: none !important;
+    display: none !important;
+}
+
+/* Убираем псевдоэлементы ::before с эмодзи */
+.chat-sidebar.chat-sidebar-collapsed .chat-profile-btn::before,
+.chat-sidebar.chat-sidebar-collapsed .chat-export-btn::before,
+.chat-sidebar.chat-sidebar-collapsed .chat-suggestions-sidebar-btn::before {
+    content: none !important;
 }
 
 .chat-sidebar-content {
