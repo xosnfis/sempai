@@ -4215,12 +4215,7 @@
                     });
                 });
                 
-                // Закрываем меню при клике вне его
-                document.addEventListener('click', (e) => {
-                    if (!e.target.closest('.chat-actions-menu-wrapper')) {
-                        dropdown.style.display = 'none';
-                    }
-                });
+                // Закрываем меню при клике вне его (обработчик будет добавлен один раз глобально)
                 
                 itemsContainer.appendChild(item);
             });
@@ -4535,6 +4530,15 @@
         // Очищаем старые данные файлов один раз при загрузке
         cleanupOldFileData();
         initChat();
+        
+        // Глобальный обработчик для закрытия выпадающих меню при клике вне их
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.chat-actions-menu-wrapper')) {
+                document.querySelectorAll('.chat-actions-menu-dropdown').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
         
         // Применение сохраненной темы при загрузке
         const savedTheme = localStorage.getItem('theme') || 'light';
