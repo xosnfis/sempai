@@ -194,7 +194,7 @@ CACHES = {
 # OpenRouter настройки (замена Ollama)
 OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')  # API ключ OpenRouter
 OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'  # URL OpenRouter API
-OPENROUTER_MODEL = os.environ.get('OPENROUTER_MODEL', 'deepseek/deepseek-r1')  # Модель по умолчанию
+OPENROUTER_MODEL = os.environ.get('OPENROUTER_MODEL', 'openai/gpt-oss-20b:free')  # Модель по умолчанию
 
 # Для обратной совместимости (deprecated - используйте OPENROUTER_API_KEY)
 OLLAMA_URL = OPENROUTER_URL  # Устаревшая переменная, оставлена для совместимости

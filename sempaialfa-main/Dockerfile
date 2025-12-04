@@ -23,7 +23,10 @@ COPY aichat/ /app/aichat/
 # Устанавливаем рабочую директорию в aichat
 WORKDIR /app/aichat
 
-# Собираем статические файлы
+# Создаем директорию для статических файлов
+RUN mkdir -p /app/aichat/staticfiles
+
+# Собираем статические файлы (включая шрифты)
 RUN python manage.py collectstatic --noinput || true
 
 # Открываем порт

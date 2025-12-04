@@ -51,6 +51,8 @@ services:
         echo "Ожидание подключения к базе данных..."
         sleep 2
         python manage.py migrate --noinput
+        echo "Сбор статических файлов..."
+        python manage.py collectstatic --noinput || true
         echo ""
         echo "========================================"
         echo "🚀 Сервер Django запущен!"
