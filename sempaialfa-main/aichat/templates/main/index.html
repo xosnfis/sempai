@@ -190,17 +190,23 @@
                         <img src="{% static 'images/Group 4554.png' %}" alt="Робот-помощник" loading="lazy">
                     </div>
                 </div>
-                <div class="business-assistant-card business-assistant-card-white">
-                    <h3 class="business-assistant-card-title">УПРАВЛЕНИЕ</h3>
-                    <ul class="business-assistant-list">
+                <div class="business-assistant-card business-assistant-card-white business-assistant-accordion">
+                    <h3 class="business-assistant-card-title business-assistant-accordion-header">
+                        УПРАВЛЕНИЕ
+                        <span class="business-assistant-accordion-icon">+</span>
+                    </h3>
+                    <ul class="business-assistant-list business-assistant-accordion-content">
                         <li>Перенеси встречу "Встреча с клиентом" на завтра в 16:00</li>
                         <li>Измени описание встречи "Совещание" на "Обсуждение проекта"</li>
                         <li>Запланируй встречу с клиентом на завтра в 15:00</li>
                     </ul>
                 </div>
-                <div class="business-assistant-card business-assistant-card-white">
-                    <h3 class="business-assistant-card-title">ФУНКЦИОНАЛЬНОСТЬ</h3>
-                    <ul class="business-assistant-list">
+                <div class="business-assistant-card business-assistant-card-white business-assistant-accordion">
+                    <h3 class="business-assistant-card-title business-assistant-accordion-header">
+                        ФУНКЦИОНАЛЬНОСТЬ
+                        <span class="business-assistant-accordion-icon">+</span>
+                    </h3>
+                    <ul class="business-assistant-list business-assistant-accordion-content">
                         <li>Сколько сотрудников у меня работает и каков общий фонд зарплат?</li>
                         <li>Покажи последние 5 чеков</li>
                         <li>Какие товары есть в инвентаризации?</li>
@@ -317,6 +323,32 @@
                 behavior: 'smooth'
             });
         }
+
+        // Accordion функциональность для блоков УПРАВЛЕНИЕ и ФУНКЦИОНАЛЬНОСТЬ в адаптивной версии
+        document.addEventListener('DOMContentLoaded', function() {
+            const accordionHeaders = document.querySelectorAll('.business-assistant-accordion-header');
+            
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const accordion = this.closest('.business-assistant-accordion');
+                    const isActive = accordion.classList.contains('active');
+                    
+                    // Закрываем все остальные accordion
+                    document.querySelectorAll('.business-assistant-accordion').forEach(acc => {
+                        if (acc !== accordion) {
+                            acc.classList.remove('active');
+                        }
+                    });
+                    
+                    // Переключаем текущий accordion
+                    if (isActive) {
+                        accordion.classList.remove('active');
+                    } else {
+                        accordion.classList.add('active');
+                    }
+                });
+            });
+        });
 
         // Функции смены темы
         function toggleIndexTheme() {

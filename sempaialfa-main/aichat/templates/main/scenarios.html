@@ -104,7 +104,7 @@
                         </div>
                     </div>
                     <div class="scenario-detail-actions">
-                        <a href="{% url 'chat' %}" class="scenario-detail-btn">Попробовать этот сценарий →</a>
+                        <a href="{% url 'chat' %}" class="scenario-detail-btn" onclick="handleScenarioClick(event)">Попробовать этот сценарий →</a>
                     </div>
                 </div>
             </div>
@@ -148,7 +148,7 @@
                         </div>
                     </div>
                     <div class="scenario-detail-actions">
-                        <a href="{% url 'chat' %}" class="scenario-detail-btn">Попробовать этот сценарий →</a>
+                        <a href="{% url 'chat' %}" class="scenario-detail-btn" onclick="handleScenarioClick(event)">Попробовать этот сценарий →</a>
                     </div>
                 </div>
             </div>
@@ -191,7 +191,7 @@
                         </div>
                     </div>
                     <div class="scenario-detail-actions">
-                        <a href="{% url 'chat' %}" class="scenario-detail-btn">Попробовать этот сценарий →</a>
+                        <a href="{% url 'chat' %}" class="scenario-detail-btn" onclick="handleScenarioClick(event)">Попробовать этот сценарий →</a>
                     </div>
                 </div>
             </div>
@@ -277,7 +277,7 @@
                         </div>
                     </div>
                     <div class="scenario-detail-actions">
-                        <a href="{% url 'chat' %}" class="scenario-detail-btn">Попробовать этот сценарий →</a>
+                        <a href="{% url 'chat' %}" class="scenario-detail-btn" onclick="handleScenarioClick(event)">Попробовать этот сценарий →</a>
                     </div>
                 </div>
             </div>
@@ -286,7 +286,7 @@
             <div class="scenarios-cta-section">
                 <h2 class="scenarios-cta-title">Готовы начать?</h2>
                 <p class="scenarios-cta-text">Попробуйте ассистента прямо сейчас — это бесплатно</p>
-                <a href="{% url 'chat' %}" class="scenarios-cta-button">Начать работу с ассистентом</a>
+                <a href="{% url 'chat' %}" class="scenarios-cta-button" onclick="handleScenarioClick(event)">Начать работу с ассистентом</a>
             </div>
         </div>
     </main>
@@ -382,6 +382,19 @@
                 return user && user.email;
             } catch (e) {
                 return false;
+            }
+        }
+
+        // Обработка клика на кнопку "Попробовать этот сценарий"
+        function handleScenarioClick(event) {
+            event.preventDefault();
+            
+            if (isUserAuthenticated()) {
+                // Пользователь авторизован - переходим в чат
+                window.location.href = "{% url 'chat' %}";
+            } else {
+                // Пользователь не авторизован - показываем модальное окно
+                document.getElementById('loginRequiredModal').style.display = 'flex';
             }
         }
 
@@ -504,6 +517,7 @@
                 <button class="index-modal-close" onclick="closeLoginRequiredModal()">×</button>
             </div>
             <div class="index-modal-body">
+                <p class="index-modal-text" style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">Войдите / Зарегистрируйтесь</p>
                 <p class="index-modal-text">Для использования ИИ-чата необходимо войти в аккаунт или зарегистрироваться.</p>
             </div>
             <div class="index-modal-footer">

@@ -830,11 +830,32 @@ ul {
 }
 
 @media (max-width: 768px) {
+    /* Исправление цвета текста в полях ввода формы входа/регистрации в светлой теме */
+    body:not(.dark-theme) .login-input {
+        color: #000000 !important;
+    }
+    
+    /* Увеличение размера иконки кнопки смены темы на странице входа/регистрации в адаптивной версии */
+    .login-theme-toggle {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    .login-theme-icon {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
     .hero-section {
         padding: 60px 15px 30px !important;
         padding-top: 90px !important;
         min-height: auto !important;
         max-height: 70vh !important;
+    }
+    
+    /* Убираем скругление hero-section в светлой теме в адаптиве */
+    body:not(.dark-theme) .hero-section {
+        border-radius: 0 !important;
     }
     
     .hero-title {
@@ -857,9 +878,13 @@ ul {
         line-height: 1.4 !important;
     }
     
+    .cta-button {
+        margin-bottom: 25px !important;
+    }
+    
     .welcome-section {
         padding: 35px 15px 30px !important;
-        margin-top: -50px !important;
+        margin-top: 0 !important;
         border-radius: 35px 35px 0 0 !important;
     }
     
@@ -10700,10 +10725,31 @@ body:not(.dark-theme) .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat
    MOBILE DEVICES (up to 480px)
    ============================================ */
 @media (max-width: 480px) {
+    /* Исправление цвета текста в полях ввода формы входа/регистрации в светлой теме */
+    body:not(.dark-theme) .login-input {
+        color: #000000 !important;
+    }
+    
+    /* Увеличение размера иконки кнопки смены темы на странице входа/регистрации в адаптивной версии */
+    .login-theme-toggle {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    .login-theme-icon {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
     /* Hero Section Mobile */
     .hero-section {
         padding: 40px 15px;
         min-height: auto;
+    }
+    
+    /* Убираем скругление hero-section в светлой теме в адаптиве */
+    body:not(.dark-theme) .hero-section {
+        border-radius: 0 !important;
     }
     
     .hero-title {
@@ -10724,10 +10770,14 @@ body:not(.dark-theme) .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat
         font-size: 16px;
     }
     
+    .cta-button {
+        margin-bottom: 20px !important;
+    }
+    
     /* Welcome Section Mobile - уменьшено чтобы кнопка была видна */
     .welcome-section {
-        padding: 30px 15px 25px !important;
-        margin-top: -40px !important;
+        padding: 30px 45px 25px !important;
+        margin-top: 0 !important;
         border-radius: 30px 30px 0 0 !important;
     }
     
@@ -10771,6 +10821,93 @@ body:not(.dark-theme) .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat
         grid-template-columns: 1fr;
         gap: 20px;
         padding: 0 15px;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* Регулируемый отступ между текстом и иконкой AI-бота в адаптиве */
+    .advantages-list {
+        gap: 6px !important; /* Уменьшено расстояние между пунктами в адаптиве */
+        margin-bottom: var(--advantages-list-margin-bottom, 40px) !important; /* Измените значение 40px для изменения отступа */
+    }
+    
+    .advantages-illustration {
+        margin-top: 0 !important;
+        top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    .advantages-illustration img {
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
+        object-position: bottom center !important;
+    }
+    
+    /* Скрываем описания преимуществ в адаптиве, оставляем только названия */
+    .advantage-description {
+        display: none !important;
+    }
+    
+    /* Скрываем списки в блоке "Что умеет личный кабинет" в адаптивной версии */
+    .feature-list {
+        display: none !important;
+    }
+    
+    /* Скрываем изображение AI-бота в блоке "Что умеет Альфа-Ассистент" в адаптивной версии */
+    .business-assistant-robot {
+        display: none !important;
+    }
+    
+    /* Accordion функциональность для блоков УПРАВЛЕНИЕ и ФУНКЦИОНАЛЬНОСТЬ в адаптивной версии */
+    .business-assistant-accordion {
+        cursor: pointer;
+    }
+    
+    .business-assistant-accordion-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        margin-bottom: 0 !important;
+        padding: 15px !important;
+        margin: -15px -15px 0 -15px !important;
+        transition: background-color 0.3s ease !important;
+    }
+    
+    .business-assistant-accordion-header:hover {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+    
+    .dark-theme .business-assistant-accordion-header:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    
+    .business-assistant-accordion-icon {
+        font-size: 24px !important;
+        font-weight: bold !important;
+        transition: transform 0.3s ease !important;
+        color: #ff0000 !important;
+        flex-shrink: 0 !important;
+        margin-left: 10px !important;
+    }
+    
+    .business-assistant-accordion.active .business-assistant-accordion-icon {
+        transform: rotate(45deg) !important;
+    }
+    
+    .business-assistant-accordion-content {
+        max-height: 0 !important;
+        overflow: hidden !important;
+        transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease !important;
+        padding: 0 15px !important;
+        margin: 0 !important;
+    }
+    
+    .business-assistant-accordion.active .business-assistant-accordion-content {
+        max-height: 500px !important;
+        padding: 15px !important;
+        margin-top: 10px !important;
     }
     
     .advantage-card {
@@ -11156,6 +11293,20 @@ body:not(.dark-theme) .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat
         grid-template-columns: 1fr;
         gap: 10px;
         padding: 15px;
+    }
+    
+    /* Увеличение размера кнопки закрытия модального окна подсказок в адаптивной версии */
+    .suggestions-modal-close {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 36px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+    }
+    
+    /* Скрываем кнопки экспорта в сообщениях от AI-помощника в адаптивной версии */
+    .chat-message-actions {
+        display: none !important;
     }
     
     .suggestion-modal-item {
@@ -15374,6 +15525,7 @@ body:not(.dark-theme) .index-profile-header {
     --mobile-touch-target: 44px;
     --mobile-touch-target-large: 48px;
     --mobile-spacing-xs: 0.5rem;
+    --advantages-list-margin-bottom: 40px; /* Отступ между текстом и иконкой AI-бота в адаптиве (можно менять) */
     --mobile-spacing-sm: 1rem;
     --mobile-spacing-md: 1.5rem;
     --mobile-spacing-lg: 2rem;
@@ -15396,6 +15548,11 @@ body:not(.dark-theme) .index-profile-header {
    TABLET AND MOBILE (max-width: 768px)
    ============================================ */
 @media (max-width: 768px) {
+    /* CSS-переменная для регулировки отступа между текстом и иконкой AI-бота */
+    :root {
+        --advantages-list-margin-bottom: 40px; /* Измените это значение для изменения отступа */
+    }
+    
     /* Общие улучшения для мобильных */
     html {
         font-size: 16px;
@@ -15750,7 +15907,11 @@ body:not(.dark-theme) .index-profile-header {
         padding: 60px 20px 40px !important;
         min-height: auto !important;
         padding-top: 100px !important;
-        border-radius: 40px 40px 0 0 !important;
+    }
+    
+    /* Убираем скругление hero-section в светлой теме в адаптиве */
+    body:not(.dark-theme) .hero-section {
+        border-radius: 0 !important;
     }
     
     .hero-title {
@@ -15798,6 +15959,7 @@ body:not(.dark-theme) .index-profile-header {
         border-radius: 12px !important;
         box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3) !important;
         transition: all 0.3s ease !important;
+        margin-bottom: 25px !important;
     }
     
     .cta-button:active,
@@ -15848,13 +16010,34 @@ body:not(.dark-theme) .index-profile-header {
         grid-template-columns: 1fr !important;
         gap: 20px !important;
         padding: 0 15px;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* Регулируемый отступ между текстом и иконкой AI-бота в адаптиве */
+    .advantages-list {
+        gap: 6px !important; /* Уменьшено расстояние между пунктами в адаптиве */
+        margin-bottom: var(--advantages-list-margin-bottom, 40px) !important; /* Измените значение 40px для изменения отступа */
+    }
+    
+    .advantages-illustration {
+        margin-top: -450px !important;
+        top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    .advantages-illustration img {
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
+        object-position: bottom center !important;
     }
     
     .advantage-item {
         flex-direction: row;
         gap: 15px;
-        padding: 20px 15px;
+        padding: 8px 15px !important; /* Уменьшено внутреннее расстояние в адаптиве */
         align-items: flex-start;
+        margin-bottom: 0 !important;
     }
     
     .advantage-number {
@@ -15868,8 +16051,17 @@ body:not(.dark-theme) .index-profile-header {
     }
     
     .advantage-description {
-        font-size: clamp(14px, 3.5vw, 16px) !important;
-        line-height: 1.7 !important;
+        display: none !important; /* Скрываем описания в адаптиве, оставляем только названия */
+    }
+    
+    /* Скрываем списки в блоке "Что умеет личный кабинет" в адаптивной версии */
+    .feature-list {
+        display: none !important;
+    }
+    
+    /* Скрываем изображение AI-бота в блоке "Что умеет Альфа-Ассистент" в адаптивной версии */
+    .business-assistant-robot {
+        display: none !important;
     }
     
     .feature-card {
@@ -15882,7 +16074,7 @@ body:not(.dark-theme) .index-profile-header {
     
     .features-grid {
         grid-template-columns: 1fr !important;
-        gap: 20px !important;
+        gap: 1px !important;
         padding: 0 15px;
     }
     
@@ -16935,7 +17127,7 @@ body:not(.dark-theme) .index-profile-header {
         width: 100% !important;
         height: auto !important;
         border-radius: 16px !important;
-        margin: 20px 0 !important;
+        margin: 140px 0 !important;
     }
     
     /* ============================================
@@ -17302,15 +17494,7 @@ body:not(.dark-theme) .index-profile-header {
     }
     
     .business-assistant-robot {
-        width: 100% !important;
-        max-width: 180px !important;
-        margin: 10px auto 0 !important;
-        padding-bottom: 0 !important;
-        top: 0 !important;
-        position: relative !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        display: none !important; /* Скрываем изображение AI-бота в адаптивной версии */
     }
     
     .business-assistant-robot img {
@@ -17373,6 +17557,22 @@ body:not(.dark-theme) .index-profile-header {
 
 /* Дополнительные улучшения для очень маленьких экранов */
 @media (max-width: 480px) {
+    /* Исправление цвета текста в полях ввода формы входа/регистрации в светлой теме */
+    body:not(.dark-theme) .login-input {
+        color: #000000 !important;
+    }
+    
+    /* Увеличение размера иконки кнопки смены темы на странице входа/регистрации в адаптивной версии */
+    .login-theme-toggle {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    .login-theme-icon {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
     .business-assistant-section {
         padding: 40px 12px 30px !important;
         border-radius: 30px 30px 0 0 !important;
@@ -17409,13 +17609,64 @@ body:not(.dark-theme) .index-profile-header {
     }
     
     .business-assistant-robot {
-        max-width: 140px !important;
-        margin: 8px auto 0 !important;
+        display: none !important; /* Скрываем изображение AI-бота в адаптивной версии */
     }
     
     .business-assistant-card-title {
         font-size: clamp(15px, 4.5vw, 17px) !important;
         margin-bottom: 12px !important;
+    }
+    
+    /* Accordion функциональность для блоков УПРАВЛЕНИЕ и ФУНКЦИОНАЛЬНОСТЬ в адаптивной версии */
+    .business-assistant-accordion {
+        cursor: pointer;
+    }
+    
+    .business-assistant-accordion-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        margin-bottom: 0 !important;
+        padding: 15px !important;
+        margin: -15px -15px 0 -15px !important;
+        transition: background-color 0.3s ease !important;
+    }
+    
+    .business-assistant-accordion-header:hover {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+    
+    .dark-theme .business-assistant-accordion-header:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    
+    .business-assistant-accordion-icon {
+        font-size: 24px !important;
+        font-weight: bold !important;
+        transition: transform 0.3s ease !important;
+        color: #ff0000 !important;
+        flex-shrink: 0 !important;
+        margin-left: 10px !important;
+    }
+    
+    .business-assistant-accordion.active .business-assistant-accordion-icon {
+        transform: rotate(45deg) !important;
+    }
+    
+    .business-assistant-accordion-content {
+        max-height: 0 !important;
+        overflow: hidden !important;
+        transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease !important;
+        padding: 0 15px !important;
+        margin: 0 !important;
+    }
+    
+    .business-assistant-accordion.active .business-assistant-accordion-content {
+        max-height: 500px !important;
+        padding: 15px !important;
+        margin-top: 10px !important;
     }
     
     .business-assistant-list {
@@ -17505,6 +17756,11 @@ body:not(.dark-theme) .index-profile-header {
             max-height: 65vh !important;
         }
         
+        /* Убираем скругление hero-section в светлой теме в адаптиве */
+        body:not(.dark-theme) .hero-section {
+            border-radius: 0 !important;
+        }
+        
         .hero-title {
             margin-bottom: 10px !important;
             font-size: clamp(22px, 6.5vw, 28px) !important;
@@ -17523,6 +17779,7 @@ body:not(.dark-theme) .index-profile-header {
         
         .cta-button {
             margin-top: 20px !important;
+            margin-bottom: 20px !important;
             width: calc(100% - 24px) !important;
             padding: 16px 28px !important;
             font-size: clamp(17px, 5vw, 19px) !important;
@@ -17533,8 +17790,6 @@ body:not(.dark-theme) .index-profile-header {
         
         /* Уменьшаем Welcome Section чтобы кнопка была видна */
         .welcome-section {
-            padding: 25px 12px 20px !important;
-            margin-top: -35px !important;
             border-radius: 25px 25px 0 0 !important;
         }
         
@@ -17554,6 +17809,20 @@ body:not(.dark-theme) .index-profile-header {
             font-size: clamp(12px, 3.5vw, 14px) !important;
             line-height: 1.3 !important;
             margin-bottom: 8px !important;
+        }
+        
+        /* Увеличение размера кнопки закрытия модального окна подсказок в адаптивной версии */
+        .suggestions-modal-close {
+            width: 50px !important;
+            height: 50px !important;
+            font-size: 36px !important;
+            min-width: 50px !important;
+            min-height: 50px !important;
+        }
+        
+        /* Скрываем кнопки экспорта в сообщениях от AI-помощника в адаптивной версии */
+        .chat-message-actions {
+            display: none !important;
         }
         
         .bookmark-icon {
@@ -17661,7 +17930,12 @@ body:not(.dark-theme) .index-profile-header {
     }
     
     .advantage-description {
-        font-size: clamp(14px, 4vw, 16px) !important;
+        display: none !important; /* Скрываем описания в адаптиве, оставляем только названия */
+    }
+    
+    /* Скрываем списки в блоке "Что умеет личный кабинет" в адаптивной версии */
+    .feature-list {
+        display: none !important;
     }
 }
 
@@ -18059,7 +18333,7 @@ body:not(.dark-theme) .index-profile-header {
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 12px !important;
-        padding: 16px !important;
+        padding: 1px !important;
     }
     
     .advantage-number {

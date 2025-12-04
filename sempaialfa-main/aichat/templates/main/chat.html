@@ -35,7 +35,7 @@
 <body class="chat-page">
     <div class="chat-container">
         <!-- Sidebar Overlay (Mobile) -->
-        <div class="chat-sidebar-overlay" id="chatSidebarOverlay" onclick="toggleChatSidebar()"></div>
+        <div class="chat-sidebar-overlay" id="chatSidebarOverlay"></div>
         
         <!-- Left Sidebar -->
         <aside class="chat-sidebar" id="chatSidebar">
@@ -55,9 +55,9 @@
                         </svg>
                     </button>
                     <!-- Кнопка закрытия сайдбара на мобильных -->
-                    <button class="chat-sidebar-close-btn" id="chatSidebarCloseBtn" onclick="closeChatSidebar();" title="Закрыть меню">
+                    <button class="chat-sidebar-close-btn" id="chatSidebarCloseBtn" onclick="closeChatSidebar(event)" title="Закрыть меню">
                         <svg class="chat-sidebar-close-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </button>
                 </div>
@@ -4566,6 +4566,9 @@
         applyTheme(savedTheme);
         updateThemeButtonText();
         
+        // Переменная для хранения обработчика overlay (чтобы можно было его удалить)
+        let overlayClickHandler = null;
+        
         // Функция для открытия/закрытия сайдбара на мобильных
         function toggleChatSidebar() {
             const sidebar = document.getElementById('chatSidebar');
@@ -4587,20 +4590,81 @@
         }
         
         // Функция для закрытия сайдбара (используется кнопкой крестика)
-        function closeChatSidebar() {
+        function closeChatSidebar(event) {
+            // Критически важно остановить все события
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+                event.stopImmediatePropagation(); // Останавливаем все последующие обработчики
+            }
+            
             const sidebar = document.getElementById('chatSidebar');
             const overlay = document.getElementById('chatSidebarOverlay');
             const burgerBtn = document.getElementById('chatBurgerBtn');
             
-            if (sidebar && overlay && burgerBtn) {
-                sidebar.classList.remove('chat-sidebar-open');
-                overlay.classList.remove('chat-sidebar-overlay-active');
-                burgerBtn.classList.remove('chat-burger-active');
+            if (!sidebar || !overlay || !burgerBtn) {
+                return;
             }
+            
+            // Закрываем панель
+            sidebar.classList.remove('chat-sidebar-open');
+            overlay.classList.remove('chat-sidebar-overlay-active');
+            burgerBtn.classList.remove('chat-burger-active');
+            
+            // Временно отключаем pointer-events у overlay, чтобы предотвратить случайные клики
+            overlay.style.pointerEvents = 'none';
+            setTimeout(() => {
+                overlay.style.pointerEvents = '';
+            }, 300);
         }
         
-        // Делаем функцию глобальной для вызова из onclick
+        // Делаем функцию глобальной сразу, чтобы она была доступна
         window.closeChatSidebar = closeChatSidebar;
+        
+        // Обработчик клика на overlay через addEventListener (после загрузки DOM)
+        document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('chatSidebarOverlay');
+            const sidebar = document.getElementById('chatSidebar');
+            
+            if (overlay && sidebar) {
+                // Создаем обработчик и сохраняем ссылку на него
+                overlayClickHandler = function(event) {
+                    // Закрываем панель только если клик был именно по overlay (не по sidebar)
+                    const sidebar = document.getElementById('chatSidebar');
+                    if (event.target === overlay && sidebar && sidebar.classList.contains('chat-sidebar-open')) {
+                        // Дополнительная проверка: убеждаемся, что sidebar не содержит цель клика
+                        if (!sidebar.contains(event.target)) {
+                            toggleChatSidebar();
+                        }
+                    }
+                };
+                
+                // Добавляем обработчик
+                overlay.addEventListener('click', overlayClickHandler);
+                
+                // Предотвращаем всплытие кликов внутри sidebar, но НЕ на кнопке закрытия и элементах меню действий
+                sidebar.addEventListener('click', function(event) {
+                    // Не останавливаем событие, если клик на кнопке закрытия или элементах меню действий
+                    const closeBtn = event.target.closest('#chatSidebarCloseBtn');
+                    const actionsMenuWrapper = event.target.closest('.chat-actions-menu-wrapper');
+                    
+                    if (!closeBtn && !actionsMenuWrapper) {
+                        event.stopPropagation();
+                    }
+                });
+                
+                // Дополнительный обработчик для кнопки закрытия через addEventListener
+                const closeBtn = document.getElementById('chatSidebarCloseBtn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        closeChatSidebar(event);
+                    }, true); // useCapture: true для перехвата в фазе захвата
+                }
+            }
+        });
         
         // Функция для сворачивания/разворачивания боковой панели (только для десктопа)
         function toggleSidebarCollapse() {
