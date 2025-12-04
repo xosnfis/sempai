@@ -3,7 +3,11 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
     <title>Чат - Альфа-Ассистент</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
     <link rel="stylesheet" href="{% static 'css/charts.css' %}?v={{ cache_version }}">
@@ -50,6 +54,12 @@
                             <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </button>
+                    <!-- Кнопка закрытия сайдбара на мобильных -->
+                    <button class="chat-sidebar-close-btn" id="chatSidebarCloseBtn" onclick="closeChatSidebar();" title="Закрыть меню">
+                        <svg class="chat-sidebar-close-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             
@@ -64,6 +74,14 @@
             <div class="chat-sidebar-footer">
                 <button class="chat-profile-btn" id="chatThemeBtn" onclick="toggleChatTheme()">
                     <span class="chat-profile-text" id="chatThemeBtnText">Тема</span>
+                </button>
+                <button class="chat-profile-btn chat-export-btn" id="chatExportBtn" onclick="showExportChatModal()" style="display: none;">
+                    <img src="{% static 'images/skachat.svg' %}" alt="Экспорт" class="chat-profile-icon" loading="lazy">
+                    <span class="chat-profile-text">Экспорт</span>
+                </button>
+                <button class="chat-profile-btn chat-suggestions-sidebar-btn" id="chatSuggestionsSidebarBtn" onclick="toggleSuggestionsModal()" title="Примеры вопросов">
+                    <img src="{% static 'images/light.png' %}" alt="Подсказки" class="chat-profile-icon" loading="lazy">
+                    <span class="chat-profile-text">Подсказки</span>
                 </button>
             </div>
         </aside>
@@ -208,6 +226,7 @@
             zakrep2: "{% static 'images/zakrep2.svg' %}",
             red: "{% static 'images/red.svg' %}",
             udalit: "{% static 'images/udalit.png' %}",
+            iznr: "{% static 'images/iznr.png' %}",
             csv: "{% static 'images/csv.png' %}",
             txt: "{% static 'images/txt.png' %}",
             png: "{% static 'images/png.png' %}"
@@ -1832,13 +1851,20 @@
 
         // Показать/скрыть кнопку экспорта всего чата
         function toggleChatExportButtons() {
-            const exportButton = document.getElementById('chatExportAllButton');
+            // Показываем кнопку экспорта в сайдбаре
+            const exportButton = document.getElementById('chatExportBtn');
             if (exportButton) {
                 if (currentChatId && chats.find(c => c.id === currentChatId)) {
-                    exportButton.style.display = 'block';
+                    exportButton.style.display = 'flex';
                 } else {
                     exportButton.style.display = 'none';
                 }
+            }
+            
+            // Скрываем старую кнопку экспорта
+            const oldExportButton = document.getElementById('chatExportAllButton');
+            if (oldExportButton) {
+                oldExportButton.style.display = 'none';
             }
         }
         
@@ -4116,43 +4142,84 @@
                     <div class="chat-history-item-content">
                         <span class="chat-history-item-title">${chat.title}</span>
                         <div class="chat-history-item-actions">
-                            <button class="chat-pin-btn" data-chat-id="${chat.id}" title="${isPinned ? 'Открепить' : 'Закрепить'}">
-                                <img src="${IMAGE_PATHS.zakrep2}" alt="${isPinned ? 'Открепить' : 'Закрепить'}" class="chat-action-icon">
-                            </button>
-                            <button class="chat-edit-btn" data-chat-id="${chat.id}" title="Редактировать">
-                                <img src="${IMAGE_PATHS.red}" alt="Редактировать" class="chat-action-icon">
-                            </button>
-                            <button class="chat-delete-btn" data-chat-id="${chat.id}" title="Удалить">
-                                <img src="${IMAGE_PATHS.udalit}" alt="Удалить" class="chat-action-icon">
-                            </button>
+                            <div class="chat-actions-menu-wrapper">
+                                <button class="chat-actions-menu-btn" data-chat-id="${chat.id}" title="Действия">
+                                    <img src="${IMAGE_PATHS.red}" alt="Действия" class="chat-action-icon">
+                                </button>
+                                <div class="chat-actions-menu-dropdown" data-chat-id="${chat.id}" style="display: none;">
+                                    <button class="chat-action-menu-item" data-action="favorite" data-chat-id="${chat.id}" title="${isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}">
+                                        <img src="${IMAGE_PATHS.iznr}" alt="Избранное" class="chat-action-menu-icon">
+                                        <span>${isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}</span>
+                                    </button>
+                                    <button class="chat-action-menu-item" data-action="pin" data-chat-id="${chat.id}" title="${isPinned ? 'Открепить' : 'Закрепить'}">
+                                        <img src="${IMAGE_PATHS.zakrep2}" alt="${isPinned ? 'Открепить' : 'Закрепить'}" class="chat-action-menu-icon">
+                                        <span>${isPinned ? 'Открепить' : 'Закрепить'}</span>
+                                    </button>
+                                    <button class="chat-action-menu-item" data-action="edit" data-chat-id="${chat.id}" title="Редактировать">
+                                        <img src="${IMAGE_PATHS.red}" alt="Редактировать" class="chat-action-menu-icon">
+                                        <span>Редактировать</span>
+                                    </button>
+                                    <button class="chat-action-menu-item" data-action="delete" data-chat-id="${chat.id}" title="Удалить">
+                                        <img src="${IMAGE_PATHS.udalit}" alt="Удалить" class="chat-action-menu-icon">
+                                        <span>Удалить</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
                 
                 item.addEventListener('click', (e) => {
-                    if (!e.target.closest('.chat-pin-btn') && 
-                        !e.target.closest('.chat-edit-btn') && 
-                        !e.target.closest('.chat-delete-btn')) {
+                    if (!e.target.closest('.chat-actions-menu-wrapper')) {
                         loadChat(chat.id);
                     }
                 });
                 
-                const pinBtn = item.querySelector('.chat-pin-btn');
-                pinBtn.addEventListener('click', (e) => {
+                // Обработчик для кнопки меню
+                const menuBtn = item.querySelector('.chat-actions-menu-btn');
+                const dropdown = item.querySelector('.chat-actions-menu-dropdown');
+                
+                menuBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    togglePin(chat.id);
+                    // Закрываем все другие открытые меню
+                    document.querySelectorAll('.chat-actions-menu-dropdown').forEach(menu => {
+                        if (menu !== dropdown) {
+                            menu.style.display = 'none';
+                        }
+                    });
+                    // Переключаем текущее меню
+                    if (dropdown.style.display === 'none' || !dropdown.style.display) {
+                        dropdown.style.display = 'block';
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
                 });
                 
-                const editBtn = item.querySelector('.chat-edit-btn');
-                editBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    editChatTitle(chat.id);
+                // Обработчики для пунктов меню
+                const menuItems = item.querySelectorAll('.chat-action-menu-item');
+                menuItems.forEach(menuItem => {
+                    menuItem.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const action = menuItem.dataset.action;
+                        dropdown.style.display = 'none';
+                        
+                        if (action === 'favorite') {
+                            toggleFavorite(chat.id);
+                        } else if (action === 'pin') {
+                            togglePin(chat.id);
+                        } else if (action === 'edit') {
+                            editChatTitle(chat.id);
+                        } else if (action === 'delete') {
+                            deleteChat(chat.id);
+                        }
+                    });
                 });
                 
-                const deleteBtn = item.querySelector('.chat-delete-btn');
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    deleteChat(chat.id);
+                // Закрываем меню при клике вне его
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.chat-actions-menu-wrapper')) {
+                        dropdown.style.display = 'none';
+                    }
                 });
                 
                 itemsContainer.appendChild(item);
@@ -4493,6 +4560,22 @@
                 }
             }
         }
+        
+        // Функция для закрытия сайдбара (используется кнопкой крестика)
+        function closeChatSidebar() {
+            const sidebar = document.getElementById('chatSidebar');
+            const overlay = document.getElementById('chatSidebarOverlay');
+            const burgerBtn = document.getElementById('chatBurgerBtn');
+            
+            if (sidebar && overlay && burgerBtn) {
+                sidebar.classList.remove('chat-sidebar-open');
+                overlay.classList.remove('chat-sidebar-overlay-active');
+                burgerBtn.classList.remove('chat-burger-active');
+            }
+        }
+        
+        // Делаем функцию глобальной для вызова из onclick
+        window.closeChatSidebar = closeChatSidebar;
         
         // Функция для сворачивания/разворачивания боковой панели (только для десктопа)
         function toggleSidebarCollapse() {
