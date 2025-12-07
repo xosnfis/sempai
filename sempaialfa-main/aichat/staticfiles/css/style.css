@@ -11295,6 +11295,20 @@ body:not(.dark-theme) .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat
         padding: 15px;
     }
     
+    /* Увеличение размера кнопки закрытия модального окна подсказок в адаптивной версии */
+    .suggestions-modal-close {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 36px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+    }
+    
+    /* Скрываем кнопки экспорта в сообщениях от AI-помощника в адаптивной версии */
+    .chat-message-actions {
+        display: none !important;
+    }
+    
     .suggestion-modal-item {
         font-size: 13px;
         padding: 12px 15px;
@@ -17795,6 +17809,20 @@ body:not(.dark-theme) .index-profile-header {
             font-size: clamp(12px, 3.5vw, 14px) !important;
             line-height: 1.3 !important;
             margin-bottom: 8px !important;
+        }
+        
+        /* Увеличение размера кнопки закрытия модального окна подсказок в адаптивной версии */
+        .suggestions-modal-close {
+            width: 50px !important;
+            height: 50px !important;
+            font-size: 36px !important;
+            min-width: 50px !important;
+            min-height: 50px !important;
+        }
+        
+        /* Скрываем кнопки экспорта в сообщениях от AI-помощника в адаптивной версии */
+        .chat-message-actions {
+            display: none !important;
         }
         
         .bookmark-icon {

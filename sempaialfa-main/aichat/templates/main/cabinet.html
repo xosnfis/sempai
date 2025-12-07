@@ -38,7 +38,7 @@
                 </a>
             </div>
             <nav class="index-nav">
-                <a href="#" class="index-nav-link index-nav-link-highlight" id="indexChatLink" onclick="handleChatClick(event)">ИИ-Чат</a>
+                <a href="#" class="index-nav-link index-nav-link-highlight" id="indexChatLink" onclick="handleChatClick(event)">AI-Чат</a>
                 <a href="#" class="index-nav-link index-nav-link-active" id="indexCabinetLink" onclick="handleCabinetClick(event)">Личный кабинет</a>
                 <a href="{% url 'scenarios' %}" class="index-nav-link">Возможности</a>
                 <a href="{% url 'support' %}" class="index-nav-link">Поддержка</a>
@@ -66,7 +66,7 @@
                 <p class="cabinet-subtitle">Личный кабинет</p>
             </div>
             <div class="cabinet-header-right">
-                
+                <a href="{% url 'calendar' %}" class="cabinet-header-link">Календарь</a>
             </div>
         </div>
     </header>
@@ -78,6 +78,7 @@
                 <a href="#finance" class="cabinet-nav-link">Финансы</a>
                 <a href="#documents" class="cabinet-nav-link">Документы</a>
                 <a href="#communication" class="cabinet-nav-link">Связь</a>
+                <a href="{% url 'calendar' %}" class="cabinet-nav-link">Календарь</a>
             </nav>
             <div class="cabinet-sticky-right">
                 <div class="cabinet-notification-icon-sticky" id="notificationIconSticky" onclick="toggleNotifications()">
@@ -96,8 +97,8 @@
                     <span class="cabinet-ai-icon-text">Ai</span>
                 </div>
                 <div class="cabinet-ai-text">
-                    <div class="cabinet-ai-title">AI- помощник</div>
-                    <div class="cabinet-ai-subtitle">ИИ-бот даст ответы на интересующие вас вопросы</div>
+                    <div class="cabinet-ai-title">AI - ассистент</div>
+                    <div class="cabinet-ai-subtitle">AI-чат даст ответы на интересующие вас вопросы</div>
                 </div>
             </div>
         </a>
@@ -115,7 +116,7 @@
                             <circle cx="12" cy="20" r="2" fill="#ff3333"/>
                         </svg>
                     </div>
-                    <h2 class="cabinet-quick-actions-title">Быстрые действия через ИИ-ассистента</h2>
+                    <h2 class="cabinet-quick-actions-title">Быстрые действия через AI-ассистента</h2>
                 </div>
                 
                 <div class="cabinet-quick-actions-grid">
@@ -704,7 +705,8 @@
         function updateMiniCalendar() {
             const now = new Date();
             const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-            const weekdays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            // Дни недели с точками для текущего дня
+            const weekdaysWithDot = ['пн.', 'вт.', 'ср.', 'чт.', 'пт.', 'сб.', 'вс.'];
             
             const monthEl = document.getElementById('miniCalendarMonth');
             const yearEl = document.getElementById('miniCalendarYear');
@@ -714,7 +716,15 @@
             if (monthEl) monthEl.textContent = months[now.getMonth()];
             if (yearEl) yearEl.textContent = now.getFullYear();
             if (dayEl) dayEl.textContent = now.getDate();
-            if (weekdayEl) weekdayEl.textContent = weekdays[now.getDay()];
+            
+            // getDay() возвращает 0 для воскресенья, 1 для понедельника и т.д.
+            // Преобразуем: понедельник (1) -> 0, воскресенье (0) -> 6
+            const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
+            
+            // Отображаем только текущий день недели
+            if (weekdayEl) {
+                weekdayEl.textContent = weekdaysWithDot[dayOfWeek].toUpperCase();
+            }
         }
         
         // Обновляем мини-календарь при загрузке
@@ -723,22 +733,27 @@
         // Плавная прокрутка к секциям при клике на пункты меню
         document.querySelectorAll('.cabinet-nav-link').forEach(link => {
             link.addEventListener('click', function(e) {
-                e.preventDefault();
                 const targetId = this.getAttribute('href');
-                const targetSection = document.querySelector(targetId);
                 
-                if (targetSection) {
-                    const navHeight = document.querySelector('.cabinet-sticky-nav-wrapper').offsetHeight;
-                    const aiHeight = document.querySelector('.cabinet-sticky-ai-wrapper').offsetHeight;
-                    const offset = navHeight + aiHeight + 20; // Добавляем отступ
+                // Если ссылка начинается с #, это якорь на этой странице
+                if (targetId && targetId.startsWith('#')) {
+                    e.preventDefault();
+                    const targetSection = document.querySelector(targetId);
                     
-                    const targetPosition = targetSection.offsetTop - offset;
-                    
-                    window.scrollTo({
-                        top: targetPosition,
-                        behavior: 'smooth'
-                    });
+                    if (targetSection) {
+                        const navHeight = document.querySelector('.cabinet-sticky-nav-wrapper').offsetHeight;
+                        const aiHeight = document.querySelector('.cabinet-sticky-ai-wrapper').offsetHeight;
+                        const offset = navHeight + aiHeight + 20; // Добавляем отступ
+                        
+                        const targetPosition = targetSection.offsetTop - offset;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
                 }
+                // Если ссылка не начинается с #, это внешняя ссылка - позволяем браузеру обработать её нормально
             });
         });
 
@@ -1164,11 +1179,11 @@
 
     <!-- AI Helper Info Button -->
     <div class="ai-helper-info">
-        <button class="ai-helper-info-btn" title="Возможности AI-помощника">
-            <span class="ai-helper-info-icon"><img src="{% static 'images/light2.png' %}" alt="Возможности AI-помощника" style="width: 24px; height: 24px;" loading="lazy"></span>
+        <button class="ai-helper-info-btn" title="Возможности AI-ассистента">
+            <span class="ai-helper-info-icon"><img src="{% static 'images/light2.png' %}" alt="Возможности AI-ассистента" style="width: 24px; height: 24px;" loading="lazy"></span>
         </button>
         <div class="ai-helper-info-content">
-            <h3 class="ai-helper-info-title">Возможности AI-помощника</h3>
+            <h3 class="ai-helper-info-title">Возможности AI-ассистента</h3>
             <div class="ai-helper-info-list">
                 <div class="ai-helper-info-section">
                     <h4 class="ai-helper-info-section-title">Анализ данных</h4>
@@ -1276,7 +1291,7 @@
             }
         }
 
-        // Обработка клика на кнопку ИИ-Чат
+        // Обработка клика на кнопку AI-Чат
         function handleChatClick(event) {
             event.preventDefault();
             
@@ -1407,7 +1422,7 @@
                 <button class="index-modal-close" onclick="closeLoginRequiredModal()">×</button>
             </div>
             <div class="index-modal-body">
-                <p class="index-modal-text">Для использования ИИ-чата необходимо войти в аккаунт или зарегистрироваться.</p>
+                <p class="index-modal-text">Для использования AI-чата необходимо войти в аккаунт или зарегистрироваться.</p>
             </div>
             <div class="index-modal-footer">
                 <button class="index-modal-btn index-modal-btn-secondary" onclick="closeLoginRequiredModal()">Отмена</button>

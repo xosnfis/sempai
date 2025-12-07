@@ -38,7 +38,7 @@
                 </a>
             </div>
             <nav class="index-nav">
-                <a href="#" class="index-nav-link index-nav-link-highlight" id="indexChatLink" onclick="handleChatClick(event)">ИИ-Чат</a>
+                <a href="#" class="index-nav-link index-nav-link-highlight" id="indexChatLink" onclick="handleChatClick(event)">AI-Чат</a>
                 <a href="#" class="index-nav-link" id="indexCabinetLink" onclick="handleCabinetClick(event)">Личный кабинет</a>
                 <a href="{% url 'scenarios' %}" class="index-nav-link">Возможности</a>
                 <a href="{% url 'support' %}" class="index-nav-link index-nav-link-active">Поддержка</a>
@@ -72,11 +72,11 @@
                 <div class="support-page-faq-list" id="faqList">
                     <div class="support-page-faq-item">
                         <div class="support-page-faq-question" onclick="toggleFAQ(0)">
-                            <span class="support-page-faq-text">Как начать работу с ИИ-ассистентом?</span>
+                            <span class="support-page-faq-text">Как начать работу с AI-ассистентом?</span>
                             <span class="support-page-faq-toggle">▼</span>
                             </div>
                         <div class="support-page-faq-answer" id="faqAnswer0">
-                            <p>Просто перейдите в раздел "ИИ-Чат" и начните общение с ассистентом. Вы можете задавать вопросы на русском языке, и ассистент поможет вам с анализом данных, созданием отчетов, планированием и многим другим.</p>
+                            <p>Просто перейдите в раздел "AI-Чат" и начните общение с ассистентом. Вы можете задавать вопросы на русском языке, и ассистент поможет вам с анализом данных, созданием отчетов, планированием и многим другим.</p>
                         </div>
                             </div>
 
@@ -185,10 +185,10 @@
                     </div>
                     <div class="support-page-info-card">
                         <div class="support-page-info-icon">
-                            <img src="{% static 'images/5.png' %}" alt="Чат с ИИ" loading="lazy">
+                            <img src="{% static 'images/5.png' %}" alt="Чат с AI" loading="lazy">
                         </div>
-                        <h3 class="support-page-info-title">Чат с ИИ</h3>
-                        <p class="support-page-info-text">Получите мгновенную помощь от ИИ-ассистента</p>
+                        <h3 class="support-page-info-title">Чат с AI</h3>
+                        <p class="support-page-info-text">Получите мгновенную помощь от AI-ассистента</p>
                         <a href="{% url 'chat' %}" class="support-page-info-link">Перейти в чат</a>
                     </div>
                     <div class="support-page-info-card">
@@ -369,7 +369,7 @@
             }
         }
 
-        // Обработка клика на кнопку ИИ-Чат
+        // Обработка клика на кнопку AI-Чат
         function handleChatClick(event) {
             event.preventDefault();
             
@@ -498,7 +498,7 @@
                 <button class="index-modal-close" onclick="closeLoginRequiredModal()">×</button>
             </div>
             <div class="index-modal-body">
-                <p class="index-modal-text">Для использования ИИ-чата необходимо войти в аккаунт или зарегистрироваться.</p>
+                <p class="index-modal-text">Для использования AI-чата необходимо войти в аккаунт или зарегистрироваться.</p>
             </div>
             <div class="index-modal-footer">
                 <button class="index-modal-btn index-modal-btn-secondary" onclick="closeLoginRequiredModal()">Отмена</button>

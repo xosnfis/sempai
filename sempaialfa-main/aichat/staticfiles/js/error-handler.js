@@ -111,7 +111,8 @@
         };
 
         // Логируем в консоль для разработки
-        if (process.env.NODE_ENV !== 'production' || window.DEBUG_MODE) {
+        // Убрали проверку process.env, так как process не доступен в браузере
+        if (window.DEBUG_MODE !== false) {
             console.error('Ошибка:', errorLog);
         }
 

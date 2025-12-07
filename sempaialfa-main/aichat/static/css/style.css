@@ -417,6 +417,10 @@ ul {
     z-index: 1;
 }
 
+.features-grid .feature-card:nth-child(4) {
+    margin-top: 40px;
+}
+
 .feature-card {
     padding: 40px;
     border-radius: 24px;
@@ -1181,6 +1185,7 @@ ul {
     box-shadow: 0 4px 12px rgba(178, 18, 7, 0.3);
     position: relative;
     overflow: hidden;
+    top: 70px;
 }
 
 .cabinet-ai-widget::before {
@@ -1308,8 +1313,8 @@ ul {
     left: 20px;
     top: 20px;
     transform: none;
-    width: 100px;
-    height: 130px;
+    width: 120px;
+    height: 160px;
     background: #333333;
     border-radius: 12px;
     display: flex;
@@ -1320,8 +1325,8 @@ ul {
     transition: all 0.3s ease;
     z-index: 1000;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    padding: 12px;
+    overflow: visible;
+    padding: 14px;
 }
 
 .cabinet-calendar-button:hover {
@@ -1342,7 +1347,8 @@ ul {
     text-align: center;
     padding: 8px;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
+    gap: 0;
 }
 
 .cabinet-mini-calendar-header {
@@ -1359,7 +1365,7 @@ ul {
 }
 
 .cabinet-mini-calendar-month {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     text-transform: uppercase;
     line-height: 1.1;
@@ -1372,7 +1378,7 @@ ul {
 }
 
 .cabinet-mini-calendar-year {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
     line-height: 1.1;
     color: rgba(255, 255, 255, 0.8);
@@ -1397,18 +1403,23 @@ ul {
 }
 
 .cabinet-mini-calendar-weekday {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 20px;
+    font-weight: 700;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.2;
+    color: #ffffff;
+    line-height: 1.3;
     margin: 0;
-    margin-top: 2px;
+    margin-top: 6px;
     white-space: nowrap;
-    overflow: hidden;
+    overflow: visible;
     text-overflow: ellipsis;
     width: 100%;
-    letter-spacing: 0.3px;
+    letter-spacing: 1px;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    display: block;
+    visibility: visible;
+    opacity: 1;
 }
 
 .cabinet-calendar-icon {
@@ -1805,8 +1816,8 @@ ul {
     }
     
     .cabinet-calendar-button {
-        width: 85px;
-        height: 110px;
+        width: 100px;
+        height: 130px;
         left: 10px;
         top: 20px;
         transform: none;
@@ -1850,12 +1861,24 @@ ul {
     }
     
     .cabinet-mini-calendar-weekday {
-        font-size: clamp(10px, 1.4vw, 12px) !important;
+        font-size: clamp(14px, 2vw, 18px) !important;
+        font-weight: 600 !important;
         line-height: 1.2 !important;
         margin: 0 !important;
-        margin-top: 3px !important;
+        margin-top: 4px !important;
+        white-space: nowrap !important;
+        letter-spacing: 0.5px !important;
+        color: #ffffff !important;
+    }
+    
+    .cabinet-mini-calendar-weekdays {
+        font-size: clamp(9px, 1.4vw, 11px) !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+        margin-top: 4px !important;
         white-space: nowrap !important;
         letter-spacing: 0.3px !important;
+        color: rgba(255, 255, 255, 0.85) !important;
     }
     
     .cabinet-calendar-icon {
@@ -1898,8 +1921,8 @@ ul {
     }
     
     .cabinet-calendar-button {
-        width: 75px;
-        height: 100px;
+        width: 90px;
+        height: 120px;
         left: 10px;
         top: auto;
         bottom: 130px; /* Увеличено расстояние до кнопки возможностей AI для лучшей визуальной разделенности */
@@ -1942,12 +1965,17 @@ ul {
     }
     
     .cabinet-mini-calendar-weekday {
-        font-size: clamp(9px, 2.2vw, 11px) !important;
-        line-height: 1.2 !important;
+        font-size: clamp(14px, 3vw, 18px) !important;
+        font-weight: 700 !important;
+        line-height: 1.3 !important;
         margin: 0 !important;
-        margin-top: 2px !important;
+        margin-top: 5px !important;
+        margin-bottom: 2px !important;
         white-space: nowrap !important;
-        letter-spacing: 0.3px !important;
+        letter-spacing: 0.8px !important;
+        color: #ffffff !important;
+        text-align: center !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
     }
     
     .cabinet-calendar-icon {
@@ -11304,7 +11332,7 @@ body:not(.dark-theme) .chat-sidebar.chat-sidebar-collapsed .chat-theme-btn .chat
         min-height: 50px !important;
     }
     
-    /* Скрываем кнопки экспорта в сообщениях от AI-помощника в адаптивной версии */
+    /* Скрываем кнопки экспорта в сообщениях от AI-ассистента в адаптивной версии */
     .chat-message-actions {
         display: none !important;
     }
@@ -17448,7 +17476,7 @@ body:not(.dark-theme) .index-profile-header {
         background: rgba(255, 51, 51, 0.7);
     }
     
-    /* Улучшение для бизнес-ассистента */
+    /* Улучшение для AI-ассистента */
     /* Business Assistant Section - Улучшенная адаптивность */
     .business-assistant-section {
         padding: 50px 15px 40px !important;
@@ -17820,7 +17848,7 @@ body:not(.dark-theme) .index-profile-header {
             min-height: 50px !important;
         }
         
-        /* Скрываем кнопки экспорта в сообщениях от AI-помощника в адаптивной версии */
+        /* Скрываем кнопки экспорта в сообщениях от AI-ассистента в адаптивной версии */
         .chat-message-actions {
             display: none !important;
         }

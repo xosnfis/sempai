@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <title>Альфа-Ассистент - ИИ-помощник для бизнеса</title>
+    <title>Альфа-Ассистент - AI-ассистент для бизнеса</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ cache_version }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,7 +43,7 @@
                 </a>
             </div>
             <nav class="index-nav">
-                <a href="#" class="index-nav-link index-nav-link-highlight" id="indexChatLink" onclick="handleChatClick(event)">ИИ-Чат</a>
+                <a href="#" class="index-nav-link index-nav-link-highlight" id="indexChatLink" onclick="handleChatClick(event)">AI-Чат</a>
                 <a href="#" class="index-nav-link" id="indexCabinetLink" onclick="handleCabinetClick(event)">Личный кабинет</a>
                 <a href="{% url 'scenarios' %}" class="index-nav-link">Возможности</a>
                 <a href="{% url 'support' %}" class="index-nav-link">Поддержка</a>
@@ -69,7 +69,7 @@
                 <span class="title-red">А</span>льфа-Ассистент
             </h1>
             <p class="hero-subtitle">Меньше рутины — больше результатов</p>
-            <p class="hero-description">ИИ-помощник отвечает на вопросы и помогает вести бизнес</p>
+            <p class="hero-description">AI-ассистент отвечает на вопросы и помогает вести бизнес</p>
             <p class="hero-description">эффективнее.</p>
             <a href="{% url 'login' %}" class="cta-button">Перейти в кабинет</a>
         </div>
@@ -94,9 +94,9 @@
                     <span class="advantage-number">1.</span>
                     <div class="advantage-text">
                         <h3 class="advantage-title">Автоматизирует рутину</h3>
-                        <p class="advantage-description">Не нужно тратить часы на отчёты, счета и переписку. Помощник делает это сам — быстро и без ошибок.</p>
+                        <p class="advantage-description">Ассистент автоматизирует отчёты, счета и переписку — быстро и без ошибок.</p>
                     </div>
-                </div>
+                </div>  
                 <div class="advantage-item">
                     <span class="advantage-number">2.</span>
                     <div class="advantage-text">
@@ -108,7 +108,7 @@
                     <span class="advantage-number">3.</span>
                     <div class="advantage-text">
                         <h3 class="advantage-title">Подсказывает решения, а не просто цифры</h3>
-                        <p class="advantage-description">Искусственный интеллект сравнивает данные, ищет закономерности и предлагает конкретные шаги.</p>
+                        <p class="advantage-description">Ассистент сравнивает данные, ищет закономерности и предлагает конкретные шаги.</p>
                     </div>
                 </div>
                 <div class="advantage-item">
@@ -134,7 +134,7 @@
 
     <!-- Features Section -->
     <section class="features-section">
-        <h2 class="features-title">ЧТО УМЕЕТ <span class="features-title-red">ЛИЧНЫЙ КАБИНЕТ</span></h2>
+        <h2 class="features-title">ВОЗМОЖНОСТИ <span class="features-title-red">ЛИЧНОГО КАБИНЕТА</span></h2>
         <div class="features-grid">
             <div class="feature-card feature-card-light">
                 <h3 class="feature-card-title">Документы</h3>
@@ -167,13 +167,13 @@
                 </ul>
             </div>
             <div class="feature-card feature-card-light">
-                <h3 class="feature-card-title">Чат-помощник</h3>
-                <p class="feature-card-description">ИИ-чат помощник всегда готов ответить на ваши вопросы</p>
+                <h3 class="feature-card-title">AI-ассистента</h3>
+                <p class="feature-card-description">AI-ассистент всегда готов ответить на ваши вопросы</p>
                 <ul class="feature-list">
                     <li>Круглосуточная поддержка</li>
                     <li>Мгновенные ответы</li>
                     <li>Решение любых вопросов</li>
-                    <li>Помощник на базе ИИ</li>
+                    <li>Ассистент на базе AI</li>
                 </ul>
             </div>
         </div>
@@ -181,11 +181,11 @@
 
     <!-- Business Assistant Section -->
     <section class="business-assistant-section">
-        <h2 class="business-assistant-title">ЧТО УМЕЕТ <span class="business-assistant-title-red">АЛЬФА-АССИСТЕНТ</span></h2>
+        <h2 class="business-assistant-title">ВОЗМОЖНОСТИ <span class="business-assistant-title-red">AI-АССИСТЕНТА</span></h2>
         <div class="business-assistant-container">
             <div class="business-assistant-grid">
                 <div class="business-assistant-card business-assistant-card-green">
-                    <h3 class="business-assistant-card-text">СПРОСИ ПОМОЩНИКА — И ОН СДЕЛАЕТ</h3>
+                    <h3 class="business-assistant-card-text">СПРОСИ AI-АССИСТЕНТА — И ОН СДЕЛАЕТ</h3>
                     <div class="business-assistant-robot">
                         <img src="{% static 'images/Group 4554.png' %}" alt="Робот-помощник" loading="lazy">
                     </div>
@@ -266,11 +266,11 @@
 
     <!-- AI Helper Info Button -->
     <div class="ai-helper-info">
-        <button class="ai-helper-info-btn" title="Возможности AI-помощника">
-            <span class="ai-helper-info-icon"><img src="{% static 'images/light2.png' %}" alt="Возможности AI-помощника" style="width: 24px; height: 24px;" loading="lazy"></span>
+        <button class="ai-helper-info-btn" title="Возможности AI-ассистента">
+            <span class="ai-helper-info-icon"><img src="{% static 'images/light2.png' %}" alt="Возможности AI-ассистента" style="width: 24px; height: 24px;" loading="lazy"></span>
         </button>
         <div class="ai-helper-info-content">
-            <h3 class="ai-helper-info-title">Возможности AI-помощника</h3>
+            <h3 class="ai-helper-info-title">Возможности AI-ассистента</h3>
             <div class="ai-helper-info-list">
                 <div class="ai-helper-info-section">
                     <h4 class="ai-helper-info-section-title">Анализ данных</h4>
@@ -405,7 +405,7 @@
             }
         }
 
-        // Обработка клика на кнопку ИИ-Чат
+        // Обработка клика на кнопку AI-Чат
         function handleChatClick(event) {
             event.preventDefault();
             
@@ -524,7 +524,7 @@
                 <button class="index-modal-close" onclick="closeLoginRequiredModal()">×</button>
             </div>
             <div class="index-modal-body">
-                <p class="index-modal-text">Для использования ИИ-чата необходимо войти в аккаунт или зарегистрироваться.</p>
+                <p class="index-modal-text">Для использования AI-чата необходимо войти в аккаунт или зарегистрироваться.</p>
             </div>
             <div class="index-modal-footer">
                 <button class="index-modal-btn index-modal-btn-secondary" onclick="closeLoginRequiredModal()">Отмена</button>

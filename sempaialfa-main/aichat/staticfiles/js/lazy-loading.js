@@ -85,10 +85,23 @@
         // Наблюдаем за изменениями DOM (для динамически добавленных изображений)
         if ('MutationObserver' in window) {
             const mutationObserver = new MutationObserver(observeNewImages);
-            mutationObserver.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+            
+            // Функция для безопасного запуска observer
+            const startObserver = () => {
+                if (document.body) {
+                    mutationObserver.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+                }
+            };
+            
+            // Запускаем сразу, если body уже загружен, иначе ждем
+            if (document.body) {
+                startObserver();
+            } else {
+                document.addEventListener('DOMContentLoaded', startObserver);
+            }
         }
 
         // Также проверяем при загрузке страницы

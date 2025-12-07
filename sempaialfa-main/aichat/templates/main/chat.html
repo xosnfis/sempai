@@ -305,7 +305,11 @@
                 chat.messages.forEach(msg => {
                     if (!msg.isUser && msg.requestId && msg.text === 'Думаю...') {
                         // Восстанавливаем проверку статуса для незавершенных запросов
-                        activeRequests.set(msg.requestId, { chatId: chat.id, startTime: Date.now() });
+                        // Используем время из сообщения или текущее время
+                        const startTime = msg.timestamp ? new Date(msg.timestamp).getTime() : Date.now();
+                        activeRequests.set(msg.requestId, { chatId: chat.id, startTime: startTime });
+                        statusCheckAttempts.set(msg.requestId, 0); // Сбрасываем счетчик при восстановлении
+                        console.log(`🔄 Восстановление проверки статуса для запроса ${msg.requestId}`);
                         checkRequestStatus(msg.requestId, chat.id);
                     }
                 });
@@ -2039,7 +2043,19 @@
                     showLoading('Загрузка истории чата...');
                 }
                 
-                const response = await fetch(`/api/chat-history/?email=${encodeURIComponent(email)}`);
+                // Используем безопасный способ создания URL без credentials
+                // Формируем URL без использования конструктора, чтобы избежать проблем с credentials
+                const apiPath = '/api/chat-history/';
+                const queryString = 'email=' + encodeURIComponent(email);
+                const fullUrl = apiPath + '?' + queryString;
+                
+                const response = await fetch(fullUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
                 const data = await response.json();
                 if (data.success && data.history.length > 0) {
                     const historyItem = data.history.find(h => h.chat_id === currentChatId);
@@ -2280,6 +2296,471 @@
             }
         }
 
+        // Функции для управления инвентаризацией через AI
+        
+        // Создание папки
+        async function createInventoryFolderFromAI(folderData) {
+            console.log('=== createInventoryFolderFromAI вызвана ===');
+            console.log('Данные папки:', folderData);
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `inventoryFolders_${email}`;
+                const folders = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                const newFolder = {
+                    id: Date.now() + Math.random(),
+                    name: folderData.name || 'Новая папка'
+                };
+                
+                folders.push(newFolder);
+                localStorage.setItem(key, JSON.stringify(folders));
+                
+                // Отправляем событие обновления
+                window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+                
+                console.log('✅ Папка создана:', newFolder);
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при создании папки:', error);
+                return false;
+            }
+        }
+        
+        // Удаление папки
+        async function deleteInventoryFolderFromAI(folderData) {
+            console.log('=== deleteInventoryFolderFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `inventoryFolders_${email}`;
+                const folders = JSON.parse(localStorage.getItem(key) || '[]');
+                const folderIndex = folders.findIndex(f => String(f.id) === String(folderData.id));
+                
+                if (folderIndex === -1) {
+                    console.error('Папка не найдена:', folderData.id);
+                    return false;
+                }
+                
+                // Также удаляем все товары из этой папки
+                const inventoryKey = `inventory_${email}`;
+                const inventory = JSON.parse(localStorage.getItem(inventoryKey) || '[]');
+                const updatedInventory = inventory.filter(item => String(item.folderId) !== String(folderData.id));
+                localStorage.setItem(inventoryKey, JSON.stringify(updatedInventory));
+                
+                folders.splice(folderIndex, 1);
+                localStorage.setItem(key, JSON.stringify(folders));
+                
+                window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+                
+                console.log('✅ Папка удалена');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при удалении папки:', error);
+                return false;
+            }
+        }
+        
+        // Обновление папки
+        async function updateInventoryFolderFromAI(folderData) {
+            console.log('=== updateInventoryFolderFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `inventoryFolders_${email}`;
+                const folders = JSON.parse(localStorage.getItem(key) || '[]');
+                const folder = folders.find(f => String(f.id) === String(folderData.id));
+                
+                if (!folder) {
+                    console.error('Папка не найдена:', folderData.id);
+                    return false;
+                }
+                
+                if (folderData.name !== undefined && folderData.name !== null) {
+                    folder.name = folderData.name;
+                }
+                
+                localStorage.setItem(key, JSON.stringify(folders));
+                window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+                
+                console.log('✅ Папка обновлена');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при обновлении папки:', error);
+                return false;
+            }
+        }
+        
+        // Создание товара
+        async function createInventoryItemFromAI(itemData) {
+            console.log('=== createInventoryItemFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `inventory_${email}`;
+                const inventory = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                const newItem = {
+                    id: Date.now() + Math.random(),
+                    name: itemData.name || 'Новый товар',
+                    quantity: itemData.quantity !== undefined ? parseFloat(itemData.quantity) : 0,
+                    price: itemData.price !== undefined ? parseFloat(itemData.price) : 0,
+                    folderId: itemData.folderId || null
+                };
+                
+                inventory.push(newItem);
+                localStorage.setItem(key, JSON.stringify(inventory));
+                
+                window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+                
+                console.log('✅ Товар создан:', newItem);
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при создании товара:', error);
+                return false;
+            }
+        }
+        
+        // Удаление товара
+        async function deleteInventoryItemFromAI(itemData) {
+            console.log('=== deleteInventoryItemFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `inventory_${email}`;
+                const inventory = JSON.parse(localStorage.getItem(key) || '[]');
+                const itemIndex = inventory.findIndex(i => String(i.id) === String(itemData.id));
+                
+                if (itemIndex === -1) {
+                    console.error('Товар не найден:', itemData.id);
+                    return false;
+                }
+                
+                inventory.splice(itemIndex, 1);
+                localStorage.setItem(key, JSON.stringify(inventory));
+                
+                window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+                
+                console.log('✅ Товар удален');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при удалении товара:', error);
+                return false;
+            }
+        }
+        
+        // Обновление товара
+        async function updateInventoryItemFromAI(itemData) {
+            console.log('=== updateInventoryItemFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `inventory_${email}`;
+                const inventory = JSON.parse(localStorage.getItem(key) || '[]');
+                const item = inventory.find(i => String(i.id) === String(itemData.id));
+                
+                if (!item) {
+                    console.error('Товар не найден:', itemData.id);
+                    return false;
+                }
+                
+                if (itemData.name !== undefined && itemData.name !== null) {
+                    item.name = itemData.name;
+                }
+                if (itemData.quantity !== undefined && itemData.quantity !== null) {
+                    item.quantity = parseFloat(itemData.quantity);
+                }
+                if (itemData.price !== undefined && itemData.price !== null) {
+                    item.price = parseFloat(itemData.price);
+                }
+                if (itemData.folderId !== undefined) {
+                    item.folderId = itemData.folderId || null;
+                }
+                
+                localStorage.setItem(key, JSON.stringify(inventory));
+                window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+                
+                console.log('✅ Товар обновлен');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при обновлении товара:', error);
+                return false;
+            }
+        }
+        
+        // Функции для управления сотрудниками через AI
+        
+        // Создание папки должности
+        async function createEmployeeFolderFromAI(folderData) {
+            console.log('=== createEmployeeFolderFromAI вызвана ===');
+            console.log('Данные папки:', folderData);
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `employeeFolders_${email}`;
+                const folders = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                const newFolder = {
+                    id: Date.now() + Math.random(),
+                    name: folderData.name || 'Новая должность'
+                };
+                
+                folders.push(newFolder);
+                localStorage.setItem(key, JSON.stringify(folders));
+                
+                // Отправляем событие обновления
+                window.dispatchEvent(new CustomEvent('employeesUpdated'));
+                
+                console.log('✅ Папка должности создана:', newFolder);
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при создании папки должности:', error);
+                return false;
+            }
+        }
+        
+        // Удаление папки должности
+        async function deleteEmployeeFolderFromAI(folderData) {
+            console.log('=== deleteEmployeeFolderFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `employeeFolders_${email}`;
+                const folders = JSON.parse(localStorage.getItem(key) || '[]');
+                const folderIndex = folders.findIndex(f => String(f.id) === String(folderData.id));
+                
+                if (folderIndex === -1) {
+                    console.error('Папка должности не найдена:', folderData.id);
+                    return false;
+                }
+                
+                // Также удаляем всех сотрудников из этой должности (убираем folderId)
+                const employeesKey = `employees_${email}`;
+                const employees = JSON.parse(localStorage.getItem(employeesKey) || '[]');
+                employees.forEach(emp => {
+                    if (String(emp.folderId) === String(folderData.id)) {
+                        emp.folderId = null;
+                    }
+                });
+                localStorage.setItem(employeesKey, JSON.stringify(employees));
+                
+                folders.splice(folderIndex, 1);
+                localStorage.setItem(key, JSON.stringify(folders));
+                
+                window.dispatchEvent(new CustomEvent('employeesUpdated'));
+                
+                console.log('✅ Папка должности удалена');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при удалении папки должности:', error);
+                return false;
+            }
+        }
+        
+        // Обновление папки должности
+        async function updateEmployeeFolderFromAI(folderData) {
+            console.log('=== updateEmployeeFolderFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `employeeFolders_${email}`;
+                const folders = JSON.parse(localStorage.getItem(key) || '[]');
+                const folder = folders.find(f => String(f.id) === String(folderData.id));
+                
+                if (!folder) {
+                    console.error('Папка должности не найдена:', folderData.id);
+                    return false;
+                }
+                
+                if (folderData.name !== undefined && folderData.name !== null) {
+                    folder.name = folderData.name;
+                }
+                
+                localStorage.setItem(key, JSON.stringify(folders));
+                window.dispatchEvent(new CustomEvent('employeesUpdated'));
+                
+                console.log('✅ Папка должности обновлена');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при обновлении папки должности:', error);
+                return false;
+            }
+        }
+        
+        // Создание сотрудника
+        async function createEmployeeFromAI(employeeData) {
+            console.log('=== createEmployeeFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `employees_${email}`;
+                const employees = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                const newEmployee = {
+                    id: Date.now() + Math.random(),
+                    fio: employeeData.fio || 'Не указано',
+                    phone: employeeData.phone || '',
+                    email: employeeData.email || '',
+                    salary: employeeData.salary !== undefined ? parseFloat(employeeData.salary) : 0,
+                    folderId: employeeData.folderId || null,
+                    lastPaymentDate: null
+                };
+                
+                employees.push(newEmployee);
+                localStorage.setItem(key, JSON.stringify(employees));
+                
+                window.dispatchEvent(new CustomEvent('employeesUpdated'));
+                
+                console.log('✅ Сотрудник создан:', newEmployee);
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при создании сотрудника:', error);
+                return false;
+            }
+        }
+        
+        // Удаление сотрудника
+        async function deleteEmployeeFromAI(employeeData) {
+            console.log('=== deleteEmployeeFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `employees_${email}`;
+                const employees = JSON.parse(localStorage.getItem(key) || '[]');
+                const employeeIndex = employees.findIndex(e => String(e.id) === String(employeeData.id));
+                
+                if (employeeIndex === -1) {
+                    console.error('Сотрудник не найден:', employeeData.id);
+                    return false;
+                }
+                
+                employees.splice(employeeIndex, 1);
+                localStorage.setItem(key, JSON.stringify(employees));
+                
+                window.dispatchEvent(new CustomEvent('employeesUpdated'));
+                
+                console.log('✅ Сотрудник удален');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при удалении сотрудника:', error);
+                return false;
+            }
+        }
+        
+        // Обновление сотрудника
+        async function updateEmployeeFromAI(employeeData) {
+            console.log('=== updateEmployeeFromAI вызвана ===');
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const email = currentUser.email || '';
+            if (!email) {
+                console.error('Email не найден');
+                return false;
+            }
+            
+            try {
+                const key = `employees_${email}`;
+                const employees = JSON.parse(localStorage.getItem(key) || '[]');
+                const employee = employees.find(e => String(e.id) === String(employeeData.id));
+                
+                if (!employee) {
+                    console.error('Сотрудник не найден:', employeeData.id);
+                    return false;
+                }
+                
+                if (employeeData.fio !== undefined && employeeData.fio !== null) {
+                    employee.fio = employeeData.fio;
+                }
+                if (employeeData.phone !== undefined && employeeData.phone !== null) {
+                    employee.phone = employeeData.phone;
+                }
+                if (employeeData.email !== undefined && employeeData.email !== null) {
+                    employee.email = employeeData.email;
+                }
+                if (employeeData.salary !== undefined && employeeData.salary !== null) {
+                    employee.salary = parseFloat(employeeData.salary);
+                }
+                if (employeeData.folderId !== undefined) {
+                    employee.folderId = employeeData.folderId || null;
+                }
+                
+                localStorage.setItem(key, JSON.stringify(employees));
+                window.dispatchEvent(new CustomEvent('employeesUpdated'));
+                
+                console.log('✅ Сотрудник обновлен');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при обновлении сотрудника:', error);
+                return false;
+            }
+        }
+        
         // Функция для получения данных пользователя из localStorage
         function getUserDataForAI() {
             const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -2305,11 +2786,31 @@
                 };
             });
             
+            // Загружаем папки сотрудников для сопоставления ID с названиями
+            const employeeFolders = JSON.parse(localStorage.getItem(`employeeFolders_${email}`) || '[]');
+            const employeeFolderMap = {};
+            employeeFolders.forEach(folder => {
+                employeeFolderMap[folder.id] = folder.name;
+            });
+            
+            // Обрабатываем сотрудников: заменяем folderId на название папки
+            const employees = JSON.parse(localStorage.getItem(`employees_${email}`) || '[]');
+            const processedEmployees = employees.map(emp => {
+                const folderId = emp.folderId || emp.folder;
+                const folderName = folderId ? (employeeFolderMap[folderId] || folderId) : 'Без должности';
+                return {
+                    ...emp,
+                    folderName: folderName,
+                    folder: folderName
+                };
+            });
+            
             return {
                 receipts: JSON.parse(localStorage.getItem(`receipts_${email}`) || '[]'),
                 inventory: processedInventory, // Используем обработанную инвентаризацию с названиями папок
                 inventoryFolders: inventoryFolders, // Добавляем папки для контекста
-                employees: JSON.parse(localStorage.getItem(`employees_${email}`) || '[]'),
+                employees: processedEmployees, // Используем обработанных сотрудников с названиями должностей
+                employeeFolders: employeeFolders, // Добавляем папки должностей для контекста
                 calendarEvents: JSON.parse(localStorage.getItem(`calendarEvents_${email}`) || '[]'),
                 taxesData: JSON.parse(localStorage.getItem('taxesData') || '{}'),
                 utilitiesData: JSON.parse(localStorage.getItem('utilitiesData') || '{}'),
@@ -2709,25 +3210,128 @@
         const activeRequests = new Map();
         
         // Функция для периодической проверки статуса запроса
+        // Счетчик попыток проверки статуса для предотвращения бесконечных циклов
+        const statusCheckAttempts = new Map();
+        const MAX_STATUS_CHECK_ATTEMPTS = 150; // Максимум 5 минут (150 * 2 секунды)
+        const MAX_REQUEST_TIME = 5 * 60 * 1000; // 5 минут в миллисекундах
+        
         async function checkRequestStatus(requestId, chatId) {
             try {
+                // Проверяем количество попыток
+                const attempts = statusCheckAttempts.get(requestId) || 0;
+                const requestInfo = activeRequests.get(requestId);
+                
+                if (requestInfo) {
+                    const elapsedTime = Date.now() - requestInfo.startTime;
+                    if (elapsedTime > MAX_REQUEST_TIME) {
+                        console.error(`⚠️ Запрос ${requestId} превысил максимальное время ожидания (${MAX_REQUEST_TIME}ms)`);
+                        const chat = chats.find(c => c.id === chatId);
+                        if (chat && chat.messages.length > 0) {
+                            const lastMessage = chat.messages[chat.messages.length - 1];
+                            if (!lastMessage.isUser) {
+                                lastMessage.text = 'Ошибка: Превышено время ожидания ответа. Пожалуйста, попробуйте еще раз.';
+                                saveChats();
+                                renderChatHistory();
+                                const messageIndex = chat.messages.length - 1;
+                                updateMessageText(messageIndex, lastMessage.text, true);
+                            }
+                        }
+                        activeRequests.delete(requestId);
+                        statusCheckAttempts.delete(requestId);
+                        return;
+                    }
+                }
+                
+                if (attempts >= MAX_STATUS_CHECK_ATTEMPTS) {
+                    console.error(`⚠️ Превышено максимальное количество попыток проверки статуса для запроса ${requestId}`);
+                    const chat = chats.find(c => c.id === chatId);
+                    if (chat && chat.messages.length > 0) {
+                        const lastMessage = chat.messages[chat.messages.length - 1];
+                        if (!lastMessage.isUser) {
+                            lastMessage.text = 'Ошибка: Превышено время ожидания ответа. Пожалуйста, попробуйте еще раз.';
+                            saveChats();
+                            renderChatHistory();
+                            const messageIndex = chat.messages.length - 1;
+                            updateMessageText(messageIndex, lastMessage.text, true);
+                        }
+                    }
+                    activeRequests.delete(requestId);
+                    statusCheckAttempts.delete(requestId);
+                    return;
+                }
+                
+                statusCheckAttempts.set(requestId, attempts + 1);
+                
+                console.log(`🔍 Проверка статуса запроса ${requestId} (попытка ${attempts + 1}/${MAX_STATUS_CHECK_ATTEMPTS})`);
+                
                 const response = await fetch(`/api/chat-status/${requestId}/`);
+                
+                if (!response.ok) {
+                    console.error(`❌ Ошибка HTTP при проверке статуса: ${response.status} ${response.statusText}`);
+                    if (response.status === 404) {
+                        // Запрос не найден - возможно, он был удален или не был создан
+                        const chat = chats.find(c => c.id === chatId);
+                        if (chat && chat.messages.length > 0) {
+                            const lastMessage = chat.messages[chat.messages.length - 1];
+                            if (!lastMessage.isUser) {
+                                lastMessage.text = 'Ошибка: Запрос не найден на сервере. Пожалуйста, попробуйте еще раз.';
+                                saveChats();
+                                renderChatHistory();
+                                const messageIndex = chat.messages.length - 1;
+                                updateMessageText(messageIndex, lastMessage.text, true);
+                            }
+                        }
+                        activeRequests.delete(requestId);
+                        statusCheckAttempts.delete(requestId);
+                        return;
+                    }
+                    // При других ошибках продолжаем проверку
+                    setTimeout(() => checkRequestStatus(requestId, chatId), 5000);
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 if (!data.success) {
-                    console.error('Ошибка при проверке статуса:', data.error);
+                    console.error('❌ Ошибка при проверке статуса:', data.error);
+                    // При ошибке продолжаем проверку еще несколько раз
+                    if (attempts < 10) {
+                        setTimeout(() => checkRequestStatus(requestId, chatId), 5000);
+                    } else {
+                        const chat = chats.find(c => c.id === chatId);
+                        if (chat && chat.messages.length > 0) {
+                            const lastMessage = chat.messages[chat.messages.length - 1];
+                            if (!lastMessage.isUser) {
+                                lastMessage.text = 'Ошибка: ' + (data.error || 'Не удалось получить статус запроса');
+                                saveChats();
+                                renderChatHistory();
+                                const messageIndex = chat.messages.length - 1;
+                                updateMessageText(messageIndex, lastMessage.text, true);
+                            }
+                        }
+                        activeRequests.delete(requestId);
+                        statusCheckAttempts.delete(requestId);
+                    }
                     return;
                 }
                 
                 const chat = chats.find(c => c.id === chatId);
                 if (!chat || chat.messages.length === 0) {
+                    console.warn(`⚠️ Чат ${chatId} не найден или пуст`);
+                    activeRequests.delete(requestId);
+                    statusCheckAttempts.delete(requestId);
                     return;
                 }
                 
                 const lastMessage = chat.messages[chat.messages.length - 1];
                 if (!lastMessage || lastMessage.isUser) {
+                    console.warn(`⚠️ Последнее сообщение не найдено или является сообщением пользователя`);
+                    activeRequests.delete(requestId);
+                    statusCheckAttempts.delete(requestId);
                     return;
                 }
+                
+                console.log(`📊 Статус запроса ${requestId}: ${data.status}`);
                 
                 if (data.status === 'processing' || data.status === 'pending') {
                     // Запрос еще обрабатывается, продолжаем проверку
@@ -2745,8 +3349,12 @@
                 
                 if (data.status === 'completed') {
                     // Запрос завершен
-                    console.log('Ответ получен:', data);
-                    console.log('Действие в ответе:', data.action);
+                    console.log('✅ Ответ получен для запроса', requestId);
+                    console.log('📝 Длина ответа:', data.response ? data.response.length : 0);
+                    console.log('🎯 Действие в ответе:', data.action);
+                    
+                    statusCheckAttempts.delete(requestId);
+                    
                     lastMessage.text = data.response || 'Ответ получен';
                     
                     // Обрабатываем действия (например, создание или обновление события)
@@ -2832,6 +3440,99 @@
                             if (messageSent) {
                                 lastMessage.text += '\n\n✅ Сообщение отправлено в поддержку!';
                             }
+                        } else if (data.action.action === 'create_folder') {
+                            const folderCreated = await createInventoryFolderFromAI(data.action);
+                            if (folderCreated) {
+                                lastMessage.text += '\n\n✅ Папка "' + data.action.name + '" создана!';
+                            }
+                        } else if (data.action.action === 'delete_folder') {
+                            const folderDeleted = await deleteInventoryFolderFromAI(data.action);
+                            if (folderDeleted) {
+                                lastMessage.text += '\n\n✅ Папка удалена!';
+                            } else {
+                                lastMessage.text += '\n\n⚠️ Не удалось удалить папку. Возможно, папка не найдена.';
+                            }
+                        } else if (data.action.action === 'update_folder') {
+                            const folderUpdated = await updateInventoryFolderFromAI(data.action);
+                            if (folderUpdated) {
+                                lastMessage.text += '\n\n✅ Папка обновлена!';
+                            } else {
+                                lastMessage.text += '\n\n⚠️ Не удалось обновить папку.';
+                            }
+                        } else if (data.action.action === 'create_inventory_item') {
+                            const itemCreated = await createInventoryItemFromAI(data.action);
+                            if (itemCreated) {
+                                let message = '\n\n✅ Товар "' + data.action.name + '" добавлен!';
+                                if (data.action.quantity !== undefined) {
+                                    message += ' Количество: ' + data.action.quantity;
+                                }
+                                if (data.action.price !== undefined) {
+                                    message += ', цена: ' + data.action.price + ' ₽';
+                                }
+                                lastMessage.text += message;
+                            }
+                        } else if (data.action.action === 'delete_inventory_item') {
+                            const itemDeleted = await deleteInventoryItemFromAI(data.action);
+                            if (itemDeleted) {
+                                lastMessage.text += '\n\n✅ Товар удален!';
+                            } else {
+                                lastMessage.text += '\n\n⚠️ Не удалось удалить товар. Возможно, товар не найден.';
+                            }
+                        } else if (data.action.action === 'update_inventory_item') {
+                            const itemUpdated = await updateInventoryItemFromAI(data.action);
+                            if (itemUpdated) {
+                                lastMessage.text += '\n\n✅ Товар обновлен!';
+                            } else {
+                                lastMessage.text += '\n\n⚠️ Не удалось обновить товар.';
+                            }
+                        } else if (data.action.action === 'create_employee_folder') {
+                            const folderCreated = await createEmployeeFolderFromAI(data.action);
+                            if (folderCreated) {
+                                lastMessage.text += '\n\n✅ Должность "' + data.action.name + '" создана!';
+                            }
+                        } else if (data.action.action === 'delete_employee_folder') {
+                            const folderDeleted = await deleteEmployeeFolderFromAI(data.action);
+                            if (folderDeleted) {
+                                lastMessage.text += '\n\n✅ Должность удалена!';
+                            } else {
+                                lastMessage.text += '\n\n⚠️ Не удалось удалить должность. Возможно, должность не найдена.';
+                            }
+                        } else if (data.action.action === 'update_employee_folder') {
+                            const folderUpdated = await updateEmployeeFolderFromAI(data.action);
+                            if (folderUpdated) {
+                                lastMessage.text += '\n\n✅ Должность обновлена!';
+                            } else {
+                                lastMessage.text += '\n\n⚠️ Не удалось обновить должность.';
+                            }
+                        } else if (data.action.action === 'create_employee') {
+                            const employeeCreated = await createEmployeeFromAI(data.action);
+                            if (employeeCreated) {
+                                let message = '\n\n✅ Сотрудник "' + data.action.fio + '" добавлен!';
+                                if (data.action.phone) {
+                                    message += ' Телефон: ' + data.action.phone;
+                                }
+                                if (data.action.email) {
+                                    message += ', почта: ' + data.action.email;
+                                }
+                                if (data.action.salary !== undefined) {
+                                    message += ', зарплата: ' + data.action.salary + ' ₽';
+                                }
+                                lastMessage.text += message;
+                            }
+                        } else if (data.action.action === 'delete_employee') {
+                            const employeeDeleted = await deleteEmployeeFromAI(data.action);
+                            if (employeeDeleted) {
+                                lastMessage.text += '\n\n✅ Сотрудник удален!';
+                            } else {
+                                lastMessage.text += '\n\n⚠️ Не удалось удалить сотрудника. Возможно, сотрудник не найден.';
+                            }
+                        } else if (data.action.action === 'update_employee') {
+                            const employeeUpdated = await updateEmployeeFromAI(data.action);
+                            if (employeeUpdated) {
+                                lastMessage.text += '\n\n✅ Сотрудник обновлен!';
+                            } else {
+                                lastMessage.text += '\n\n⚠️ Не удалось обновить сотрудника.';
+                            }
                         }
                     } else {
                         console.warn('⚠️ Действие отсутствует или пустое в ответе');
@@ -2850,6 +3551,9 @@
                 
                 if (data.status === 'failed') {
                     // Запрос завершился с ошибкой
+                    console.error('❌ Запрос завершился с ошибкой:', data.error);
+                    statusCheckAttempts.delete(requestId);
+                    
                     lastMessage.text = 'Ошибка: ' + (data.error || 'Неизвестная ошибка');
                     saveChats();
                     renderChatHistory();
@@ -2862,9 +3566,28 @@
                     return;
                 }
             } catch (error) {
-                console.error('Ошибка при проверке статуса запроса:', error);
-                // Продолжаем проверку даже при ошибке
-                setTimeout(() => checkRequestStatus(requestId, chatId), 5000);
+                console.error('❌ Ошибка при проверке статуса запроса:', error);
+                const attempts = statusCheckAttempts.get(requestId) || 0;
+                
+                // Продолжаем проверку только если не превышен лимит попыток
+                if (attempts < MAX_STATUS_CHECK_ATTEMPTS) {
+                    setTimeout(() => checkRequestStatus(requestId, chatId), 5000);
+                } else {
+                    console.error(`⚠️ Превышен лимит попыток для запроса ${requestId}`);
+                    const chat = chats.find(c => c.id === chatId);
+                    if (chat && chat.messages.length > 0) {
+                        const lastMessage = chat.messages[chat.messages.length - 1];
+                        if (!lastMessage.isUser) {
+                            lastMessage.text = 'Ошибка: Не удалось получить ответ от сервера. Пожалуйста, попробуйте еще раз.';
+                            saveChats();
+                            renderChatHistory();
+                            const messageIndex = chat.messages.length - 1;
+                            updateMessageText(messageIndex, lastMessage.text, true);
+                        }
+                    }
+                    activeRequests.delete(requestId);
+                    statusCheckAttempts.delete(requestId);
+                }
             }
         }
         
@@ -2918,7 +3641,8 @@
                             updateMessageText(messageIndex, 'Думаю...', false); // Не скроллим при "Думаю..."
                             
                             // Начинаем периодическую проверку статуса
-                            checkRequestStatus(requestId, chatId);
+                            // Сначала проверяем сразу (через 500мс), чтобы быстро получить ответ, если он уже готов
+                            setTimeout(() => checkRequestStatus(requestId, chatId), 500);
                         } else if (data.success && data.response) {
                             // Старый формат (синхронный ответ) - для обратной совместимости
                             lastMessage.text = data.response;
